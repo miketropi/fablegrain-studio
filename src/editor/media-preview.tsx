@@ -37,10 +37,10 @@ export default function MediaPreview({project,frame}:{project:Project;frame:numb
     if(!cache||busy)return;
     const sequence=project.sequence;
     if(!sequence.clips.length||sequence.duration<=0||sequence.duration/sequence.fps>120){setStatus("Export requires a sequence between 1 and 120 seconds.");return}
-    if(sequence.clips.some(c=>{const kind=sequence.tracks.find(t=>t.id===c.trackId)?.kind;return kind==="audio"||kind==="text"&&!c.text||kind!=="text"&&kind!=="audio"&&!(c.pageId?cache.pages.has(c.pageId):c.assetId&&cache.assets.has(c.assetId))})){setStatus("Remove audio and empty clips, or assign each visual clip a source before export.");return}
+    if(sequence.clips.some(c=>{const kind=sequence.tracks.find(t=>t.id===c.trackId)?.kind;return kind==="audio"||kind==="text"&&!c.text||kind!=="text"&&!(c.pageId?cache.pages.has(c.pageId):c.assetId&&cache.assets.has(c.assetId))})){setStatus("Remove audio and empty clips, or assign each visual clip a source before export.");return}
     if(typeof MediaRecorder==="undefined"){setStatus("Browser recording unavailable");return}
     const mime=["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"].find(t=>MediaRecorder.isTypeSupported(t));if(!mime){setStatus("WebM encoding unavailable");return}
-    const c=document.createElement("canvas");c.width=project.width;c.height=project.height;const ctx=c.getContext("2d");if(!ctx||!c.captureStream){setStatus("Canvas capture unavailable");return}
+    const c=document.createElement("canvas");c.width=project.width;c.height=project.height;const context=c.getContext("2d");if(!context||!c.captureStream){setStatus("Canvas capture unavailable");return}const ctx:CanvasRenderingContext2D=context;
     const controller=new AbortController();abort.current=controller;setBusy(true);setStatus("");setProgress(0);
     let stream:MediaStream|undefined;
     try{

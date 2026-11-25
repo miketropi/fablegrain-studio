@@ -37,7 +37,7 @@ export async function exportMotion(pages:ComicPage[],assets:ImageAsset[],w:numbe
   if(!pages.length||typeof MediaRecorder==="undefined")throw Error("Browser recording unavailable");
   const total=pages.reduce((n,p)=>n+p.seconds,0);if(total>120||total<=0||pages.some(p=>p.seconds<1||p.seconds>30))throw Error("Motion export supports 1–120 seconds");
   const canvases=await Promise.all(pages.map(p=>renderPage(p,assets,w,h)));if(signal.aborted)throw Error("Canceled");
-  const canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;const ctx=canvas.getContext("2d");if(!ctx||!canvas.captureStream)throw Error("Canvas capture unavailable");
+  const canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;const context=canvas.getContext("2d");if(!context||!canvas.captureStream)throw Error("Canvas capture unavailable");const ctx:CanvasRenderingContext2D=context;
   ctx.drawImage(canvases[0],0,0);
   const mime=["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"].find(t=>MediaRecorder.isTypeSupported(t));if(!mime)throw Error("WebM encoding unavailable");
   const stream=canvas.captureStream(Math.min(30,fps)),chunks:Blob[]=[];

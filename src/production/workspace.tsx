@@ -12,7 +12,7 @@ export default function Production({project,update}:Props){
   const p=project.production??emptyProduction();
   const [tab,setTab]=useState("Story map"),[pageId,setPageId]=useState(""),[panelId,setPanelId]=useState(""),[draft,setDraft]=useState<ComicPage|null>(null),[status,setStatus]=useState(""),[busy,setBusy]=useState(false),[progress,setProgress]=useState(0);
   const dragCleanup=useRef<(()=>void)|undefined>(undefined),abort=useRef<AbortController|null>(null),sheet=useRef<HTMLDivElement>(null);
-  useEffect(()=>()=>{dragCleanup.current?.();abort.current?.()},[]);
+  useEffect(()=>()=>{dragCleanup.current?.();abort.current?.abort()},[]);
   const save=(patch:Partial<StoryProduction>)=>update({production:{...p,...patch}});
   const page=p.pages.find(x=>x.id===pageId)??p.pages[0],shown=draft??page,panel=page?.panels.find(x=>x.id===panelId);
   function savePage(next:ComicPage){save({pages:p.pages.map(x=>x.id===next.id?next:x)})}

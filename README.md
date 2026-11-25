@@ -38,3 +38,20 @@ This is an unverified early implementation, not a media editor release. The auth
 5. Server-side Composio integration: session-based provider connections, job queue, budget and provenance. Add a separate inbound MCP interface with permissioned project commands.
 
 See [architecture notes](docs/architecture.md).
+
+
+## Milestone 1 — production workflow (0.2.0)
+
+Production tab includes an ordered chapter/scene map, cast assignments, style notes, character reference sheet links, local PNG/JPEG/WebP asset import, draggable comic panels with independent dialogue, page reordering and scene references, missing-reference review, full-resolution PNG export and silent page-slideshow WebM export. Assets are limited in size because storage is browser-local. Video timeline remains independent and does not render these pages yet.
+
+AI tab creates a server-side Composio session with a configured toolkit allowlist, instant usage disabled, and returns tool names only. Copy .env.example to .env.local and configure the owner token and Composio values. This is a single-owner integration spike, not multi-tenant authentication, and does not execute generation tools. Verify against your Composio account before enabling anything paid.
+
+Timeline now includes compatible-track transfer and interpolation primitives (dragging between tracks and live interpolation remain pending). Unit test suite expanded for these and production model invariants. No build, browser, or provider test has passed in the authoring environment: npm and GitHub DNS access from terminal are unavailable. The previous unverified status still applies. Run all checks locally before release.
+
+## Remaining release gates
+
+- Resolve/pin dependency versions and lockfile; verify UI SDK interactions including createSpans and multi-select; run browser tests.
+- Replace localStorage with persistent database and object storage; introduce authentication, migration, and quotas.
+- Real media import, timeline composition, audio, source trimming, keyframe runtime, MP4 export and rendering job queue.
+- Character generation, AI provider tool execution, job lifecycle, cost approval, retries and asset provenance; inbound MCP authorization.
+- Validate image export layout versus preview, WebM compatibility and memory usage; add page/chapter management and robust history.

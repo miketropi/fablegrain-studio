@@ -59,3 +59,26 @@ export function createSequence(fps: number): Sequence {
   const c = (id:string,trackId:string,name:string,start:number,end:number): Clip => ({id,trackId,name,start:start*fps,end:end*fps,keyframes:[]});
   return {fps,duration:12*fps,tracks,clips:[c("opening","video","Opening",0,4),c("scene","video","Scene 02",4,8),c("ending","video","Ending",8,12),c("character","overlay","Character",1,9),c("title","text","Title",2,6),c("ambient","audio","Ambient audio",0,12)]};
 }
+
+/** Transfer a clip without introducing overlap. All times are integer frames. */
+export function moveToTrack(seq: Sequence,id:string,trackId:string,start?:number):Sequence {
+  const clip=seq.clips.find(c=>c.id===id);
+  const target=seq.tracks.find(t=>t.id===trackId);
+  const source=seq.tracks.find(t=>t.id===clip?.trackId);
+  if(!clip||!target||!source||target.kind!==source.kind)return seq;
+  const s=start??clip.start,d=clip.end-clip.start;
+  if(!Number.isInteger(s)||s<0||s+d>seq.duration)return seq;
+  if(seq.clips.some(c=>c.id!==id&&c.trackId===trackId&&c.start<s+d&&s<c.end))return seq;
+  if(clip.trackId===trackId&&clip.start===s)return seq;
+  return {...seq,clips:seq.clips.map(c=>c.id===id?{...c,trackId,start:s,end:s+d}:c)};
+}
+export function addTrack(seq:Sequence,track:Track):Sequence {
+  return seq.tracks.some(t=>t.id===track.id)?seq:{...seq,tracks:[...seq.tracks,track]};
+}
+export function interpolate(keys:Keyframe[],frame:number,fallback=1):number {
+  if(!keys.length)return fallback;
+  const sorted=[...keys].sort((a,b)=>a.frame-b.frame);
+  if(frame<=sorted[0].frame)return sorted[0].value;
+  for(let i=1;i<sorted.length;i++){const l=sorted[i-1],r=sorted[i];if(frame<=r.frame)return l.value+(r.value-l.value)*(frame-l.frame)/(r.frame-l.frame||1);}
+  return sorted[sorted.length-1].value;
+}

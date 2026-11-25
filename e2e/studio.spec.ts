@@ -1,5 +1,6 @@
 import {test,expect,type Page} from "@playwright/test";
-import {version} from "../package.json";
+import {readFileSync} from "node:fs";
+const {version}=JSON.parse(readFileSync(new URL("../package.json",import.meta.url),"utf8")) as {version:string};
 async function chooseComic(page:Page){const label=page.getByLabel("Format",{exact:true});const form=page.locator("form").filter({has:page.getByLabel("Project name")});const field=(await label.count())?label.first():form.getByRole("combobox").first();if(await field.evaluate(el=>el.tagName==="SELECT")){await field.selectOption("Comic")}else{await field.click();await page.getByRole("option",{name:"Comic",exact:true}).click()}}
 test("deployed or local project creation, navigation and persistence",async({page})=>{
  const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));
@@ -81,4 +82,22 @@ test("deployed build identity",async({page,request})=>{
  const response=await request.get("/api/version");expect(response.ok(),"Deployment must expose its version; redeploy the latest source first").toBeTruthy();
  const identity=await response.json();console.log("Application version:",identity.version);expect(identity.version,"Build must match the checked-out source version").toBe(version);
  await page.goto("/");await expect(page.locator("main[data-app-version]")).toHaveAttribute("data-app-version",identity.version);
+});
+
+test("local comic canvas: SDK resize, keyboard move and cancel",async({page})=>{
+ test.skip(!!process.env.E2E_BASE_URL,"Requires new builder");
+ await page.goto("/");await chooseComic(page);await page.getByLabel("Project name").fill("Canvas QA");await page.getByRole("button",{name:"Create project"}).click();
+ await page.getByRole("navigation",{name:"Workspace"}).getByRole("button",{name:"Production",exact:true}).click();await page.getByRole("tab",{name:"Comic pages"}).click();await page.getByRole("button",{name:"+ Page",exact:true}).click();
+ const panel=page.getByRole("button",{name:"Select panel 2",exact:true});await panel.click();
+ await expect(panel).toHaveAttribute("aria-pressed","true");await expect(page.locator(".comic-handle")).toHaveCount(8);
+ const shape=page.locator(".comic-panel").nth(1);const first=(await shape.boundingBox())!;
+ const handle=page.getByRole("button",{name:"Resize panel 2 e",exact:true});await handle.focus();await page.keyboard.press("Shift+ArrowRight");
+ await expect.poll(async()=> (await shape.boundingBox())!.width).toBeGreaterThan(first.width);
+ const before=(await shape.boundingBox())!;await panel.focus();await page.keyboard.press("Shift+ArrowRight");
+ await expect.poll(async()=> (await shape.boundingBox())!.x).toBeGreaterThan(before.x);
+ const current=(await shape.boundingBox())!;await page.mouse.move(current.x+current.width/2,current.y+current.height/2);await page.mouse.down();await page.mouse.move(current.x+current.width/2+25,current.y+current.height/2-15,{steps:6});await page.keyboard.press("Escape");await page.mouse.up();
+ await expect.poll(async()=>Math.abs((await shape.boundingBox())!.x-current.x)).toBeLessThan(1);
+ await page.screenshot({path:"test-results/studio-canvas-handles.png"});
+ await page.getByRole("button",{name:"Back to projects"}).click();await page.reload();await page.getByRole("button",{name:/Canvas QA/}).click();await page.getByRole("navigation",{name:"Workspace"}).getByRole("button",{name:"Production",exact:true}).click();await page.getByRole("tab",{name:"Comic pages"}).click();
+ await expect.poll(async()=>Math.abs((await page.locator(".comic-panel").nth(1).boundingBox())!.width-current.width)).toBeLessThan(2);
 });

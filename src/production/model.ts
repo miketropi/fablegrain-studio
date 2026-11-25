@@ -1,6 +1,6 @@
 export type Scene={id:string;title:string;summary:string;characterIds:string[]};
 export type Chapter={id:string;title:string;scenes:Scene[]};
-export type Panel={id:string;x:number;y:number;w:number;h:number;assetId?:string;dialogue:string};
+export type Panel={id:string;x:number;y:number;w:number;h:number;assetId?:string;dialogue:string;locked?:boolean};
 export type ComicPage={id:string;title:string;sceneId?:string;panels:Panel[];seconds:number};
 export type StoryProduction={chapters:Chapter[];pages:ComicPage[];style:string;characterSheets:Record<string,string>};
 export const emptyProduction=():StoryProduction=>({chapters:[],pages:[],style:"",characterSheets:{}});

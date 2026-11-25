@@ -1,0 +1,9 @@
+import {test,expect} from "@playwright/test";
+test("scene custom motion: create and jump between transform keys",async({page})=>{
+ test.skip(!!process.env.E2E_BASE_URL,"Requires new composer");await page.goto("/");await page.getByRole("button",{name:/The last signal/}).click();await expect(page.getByRole("heading",{name:"Scene Composer"})).toBeVisible();await expect(page.locator(".scene-full")).toBeVisible();await expect(page.locator(".library")).toHaveCount(0);
+ await page.getByRole("button",{name:"Select object 1",exact:true}).click();await page.getByRole("button",{name:"Animate at playhead"}).click();await page.getByRole("button",{name:"Set keyframe",exact:true}).click();await expect(page.getByRole("button",{name:"Asha keyframe 0"})).toBeVisible();
+ const slider=page.getByRole("slider",{name:"Scene playhead"});await slider.focus();await page.keyboard.press("End");const shape=page.locator(".scene-object").first();const a=(await shape.boundingBox())!;await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();await page.mouse.move(a.x+a.width/2+25,a.y+a.height/2-12,{steps:8});await page.mouse.up();await expect(page.getByRole("button",{name:"Asha keyframe 120"})).toBeVisible();
+ const data=await page.evaluate(()=>JSON.parse(localStorage.getItem("fablegrain.projects.v1")!));const actor=data.find((p:{id:string})=>p.id==="example-last-signal").scenes[0].objects[0];expect(actor.keyframes.length).toBe(2);expect(actor.keyframes[1].transform.x).toBeGreaterThan(actor.keyframes[0].transform.x);
+ await page.getByRole("button",{name:"Asha keyframe 0"}).click();await expect.poll(async()=>Math.abs((await shape.boundingBox())!.x-a.x)).toBeLessThan(2);await page.getByRole("button",{name:"Asha keyframe 120"}).click();await expect.poll(async()=> (await shape.boundingBox())!.x).toBeGreaterThan(a.x+15);
+ await page.screenshot({path:"test-results/scene-custom-motion.png"});
+});

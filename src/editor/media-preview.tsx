@@ -23,7 +23,7 @@ function draw(ctx:CanvasRenderingContext2D,project:Project,cache:Cache,frame:num
     const track=sequence.tracks.find(t=>t.id===c.trackId);ctx.save();ctx.globalAlpha=Math.max(0,Math.min(1,interpolate(c.keyframes,frame-c.start)));
     const src=c.pageId?cache.pages.get(c.pageId):c.assetId?cache.assets.get(c.assetId):undefined;
     const scene=c.sceneId?project.scenes?.find(s=>s.id===c.sceneId):undefined;
-    if(scene)drawScene(ctx,scene,cache.sceneImages,w,h,(frame-c.start)/sequence.fps);
+    if(scene)drawScene(ctx,scene,cache.sceneImages,w,h,(frame-c.start)/sequence.fps,sequence.fps);
     else if(src){const sw=src instanceof HTMLCanvasElement?src.width:src.naturalWidth,sh=src instanceof HTMLCanvasElement?src.height:src.naturalHeight;const scale=Math.min(w/sw,h/sh);ctx.drawImage(src,(w-sw*scale)/2,(h-sh*scale)/2,sw*scale,sh*scale)}
     else if(track?.kind==="text"&&c.text){ctx.font=Math.round(w*.05)+"px sans-serif";ctx.textAlign="center";ctx.fillStyle="#fff";ctx.shadowColor="#000";ctx.shadowBlur=8;ctx.fillText(c.text,w/2,h*.85,w*.9)}
     else if(placeholder&&track?.kind==="video"){ctx.font=Math.round(w*.035)+"px sans-serif";ctx.fillStyle="#91939c";ctx.textAlign="center";ctx.fillText(c.name+" — no source",w/2,h/2,w*.9)}

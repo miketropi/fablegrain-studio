@@ -66,3 +66,9 @@ Milestone 1 model/timeline tests were executed with Node 22.16: 14/14 passed, wi
 ## Verification update
 
 All 16 pure model/sequence unit tests pass under Node 22.16; the six test/source files were checked against their committed Git blob hashes. The cross-track drag draft now preserves the original DOM parent until commit to avoid losing pointer capture. This interaction has not yet been verified in a browser. The Composio route additionally rejects session responses that do not confirm the configured allowlist and disabled instant usage. Provider behavior is unverified. The full application still needs dependency installation, typecheck, build and browser QA.
+
+## Milestone 3 — scoped outbound MCP (0.4.0)
+
+The AI Director can send a prompt with optional story context to one owner-configured image tool using the official Composio SDK and an MCP Streamable HTTP client. Configure the exact toolkit, tool slug, prompt field, default arguments, output path and allowed CDN hosts in .env.local. Connect the provider account to the configured Composio user first. Each call requires explicit approval, server-side token authentication, an allowlisted scoped session, and duplicate protection within the running process. Instant usage is disabled; connected provider charges may still apply. No generation call is made automatically. Import a returned inline image or a permitted CDN image into the local asset library. CORS/size restrictions apply. If a provider returns a job rather than an image, record its job ID and check provider history; async polling and durable jobs are not implemented. The configured tool must be an image-generation tool; this is not a generic multi-tenant execution endpoint.
+
+The integration follows https://docs.composio.dev/docs/sessions-via-mcp and https://ts.sdk.modelcontextprotocol.io/client. Live credentials and provider response mapping must be verified by the project owner. Do not store keys in the repository or browser.

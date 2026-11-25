@@ -35,6 +35,7 @@ export default function MediaPreview({project,frame}:{project:Project;frame:numb
   useEffect(()=>()=>abort.current?.abort(),[]);
   async function output(){
     if(!cache||busy)return;
+    const exportCache:Cache=cache;
     const sequence=project.sequence;
     if(!sequence.clips.length||sequence.duration<=0||sequence.duration/sequence.fps>120){setStatus("Export requires a sequence between 1 and 120 seconds.");return}
     if(sequence.clips.some(c=>{const kind=sequence.tracks.find(t=>t.id===c.trackId)?.kind;return kind==="audio"||kind==="text"&&!c.text||kind!=="text"&&!(c.pageId?cache.pages.has(c.pageId):c.assetId&&cache.assets.has(c.assetId))})){setStatus("Remove audio and empty clips, or assign each visual clip a source before export.");return}
@@ -47,7 +48,7 @@ export default function MediaPreview({project,frame}:{project:Project;frame:numb
       draw(ctx,project,cache,0,false);stream=c.captureStream(Math.min(30,sequence.fps));const recorder=new MediaRecorder(stream,{mimeType:mime}),chunks:Blob[]=[];
       const result=new Promise<Blob>((res,rej)=>{recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};recorder.onstop=()=>res(new Blob(chunks,{type:"video/webm"}));recorder.onerror=()=>rej(Error("Recording failed"))});
       recorder.start(200);const start=performance.now(),duration=sequence.duration/sequence.fps*1000;
-      await new Promise<void>(resolve=>{function tick(now:number){if(controller.signal.aborted||recorder.state==="inactive"){resolve();return}const elapsed=now-start;draw(ctx,project,cache,Math.min(sequence.duration-1,Math.floor(elapsed*sequence.fps/1000)),false);setProgress(Math.min(1,elapsed/duration));if(elapsed>=duration)resolve();else requestAnimationFrame(tick)}requestAnimationFrame(tick)});
+      await new Promise<void>(resolve=>{function tick(now:number){if(controller.signal.aborted||recorder.state==="inactive"){resolve();return}const elapsed=now-start;draw(ctx,project,exportCache,Math.min(sequence.duration-1,Math.floor(elapsed*sequence.fps/1000)),false);setProgress(Math.min(1,elapsed/duration));if(elapsed>=duration)resolve();else requestAnimationFrame(tick)}requestAnimationFrame(tick)});
       if(recorder.state!=="inactive")recorder.stop();const blob=await result;if(controller.signal.aborted)throw Error("Canceled");if(!blob.size)throw Error("No frames recorded");download(blob,"timeline.webm");setStatus("Export complete");
     }catch(e){setStatus(e instanceof Error?e.message:"Export failed")}finally{stream?.getTracks().forEach(t=>t.stop());setBusy(false);abort.current=null}
   }

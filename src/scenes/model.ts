@@ -4,7 +4,7 @@ export const motions=["None","Slide in","Float","Fade in","Pulse"] as const;
 export type Motion=typeof motions[number];
 export type ObjectTransform={x:number;y:number;w:number;h:number;rotation:number;opacity:number;flip:boolean};
 export type ObjectKeyframe={frame:number;transform:ObjectTransform};
-export type SceneObject=Panel & {name:string;kind:"character"|"prop";characterId?:string;rotation:number;opacity:number;flip:boolean;motion:Motion;keyframes?:ObjectKeyframe[];poseCycle?:string[];poseFps?:number};
+export type SceneObject=Panel & {name:string;kind:"character"|"prop";characterId?:string;rotation:number;opacity:number;flip:boolean;motion:Motion;keyframes?:ObjectKeyframe[];poseCycle?:string[];poseFps?:number;poseLoop?:boolean;actionId?:string};
 export type SceneComposition={id:string;name:string;storySceneId?:string;backgroundId?:string;seconds:number;objects:SceneObject[];camera:"None"|"Push in";caption:string};
 export const emptyScene=(id:string,name:string):SceneComposition=>({id,name,seconds:4,objects:[],camera:"None",caption:""});
 const clamp=(v:number,min:number,max:number)=>Math.max(min,Math.min(max,v));
@@ -29,7 +29,7 @@ export function setObjectKeyframe(o:SceneObject,frame:number,patch:Partial<Objec
  const keys=(o.keyframes??[]).filter(k=>k.frame!==at);if(!keys.length&&at>0)keys.push({frame:0,transform:baseTransform(o)});
  return {...o,keyframes:[...keys,{frame:at,transform}].sort((a,b)=>a.frame-b.frame)};
 }
-export function poseAt(o:SceneObject,seconds:number):string|undefined{const cycle=o.poseCycle??[];return cycle.length?cycle[Math.floor(Math.max(0,seconds)*clamp(o.poseFps??6,1,24))%cycle.length]:o.assetId}
+export function poseAt(o:SceneObject,seconds:number):string|undefined{const cycle=o.poseCycle??[];const frame=Math.floor(Math.max(0,seconds)*clamp(o.poseFps??6,1,24));return cycle.length?cycle[o.poseLoop===false?Math.min(frame,cycle.length-1):frame%cycle.length]:o.assetId}
 export function motionAt(object:SceneObject,seconds:number,duration:number,fps=30){
  const t=clamp(seconds,0,Math.max(0,duration)),u=clamp(t/Math.min(1,Math.max(.1,duration)),0,1),ease=1-(1-u)**3;
  if(object.keyframes?.length)return {...transformAt(object,t*fps),scale:1};

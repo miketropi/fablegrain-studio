@@ -6,3 +6,6 @@ Scene Composer owns its full workspace. Manual animation uses integer project fr
 
 ## 0.14.0 — workflow handoff
 Appending a scene selects the new clip and seeks to its first frame. Open scene source returns to the corresponding scene. Still to comic selects the newly created page. The composer remembers the active scene while navigating within a project. Click/drag insertion suppresses duplicate click events after a drag. Added compact workflow hints. Still-to-comic remains a flattened snapshot; no live comic link yet.
+
+## 0.15.0 — character actions
+Per-character reusable action definitions contain ordered pose asset IDs, FPS and loop/once playback. The example contains authored SVG pose sequences: idle, walk in place, jump, talk gesture and Observer signal pulse. These are simple frame-by-frame samples, not skeletal animation or lip sync. Actions copy their frame sequence into the scene object, so subsequent library changes cannot silently change an existing scene. Custom cycles can be saved as reusable actions. Invalid or cross-character asset references are rejected. Existing example projects gain only missing action assets and definitions. Position keyframes remain independent of pose playback. No rigging, automatic walk path or generated action assets.

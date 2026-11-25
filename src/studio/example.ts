@@ -1,4 +1,5 @@
 import type { Project } from "./project";
+import type { CharacterAction } from "../scenes/actions";
 import type { Panel,ComicPage } from "../production/model";
 export const EXAMPLE_ID="example-last-signal";
 
@@ -27,6 +28,28 @@ const sceneAssets:Project["assets"]=[
  {id:"scene-observer",name:"Observer · Hover",kind:"Character pose",characterId:"observer-character",src:"data:image/svg+xml;charset=utf-8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="145" viewBox="-100 -50 200 145">'+drone(0,0)+'</svg>')}
 ];
 const extraPoses:Project["assets"]=[{id:"scene-asha-reach",name:"Asha · Reaching",kind:"Character pose",characterId:"asha",src:"data:image/svg+xml;charset=utf-8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="220" height="310" viewBox="-110 -65 220 310">'+person(0,0).replace("M-58 48l-32 75 21 10 37-65M42 47l40 58-19 15-38-50","M-58 48l-32 75 21 10 37-65M42 47l51-41 12 15-62 58")+'</svg>')},{id:"scene-observer-dim",name:"Observer · Dim light",kind:"Character pose",characterId:"observer-character",src:"data:image/svg+xml;charset=utf-8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="145" viewBox="-100 -50 200 145">'+drone(0,0).replaceAll("#82e4ce","#426e71").replaceAll("#8de6d2","#426e71")+'</svg>')}];
+const actorFrame=(id:string,name:string,body:string):Project["assets"][number]=>({id,name,kind:"Character action frame",characterId:"asha",src:"data:image/svg+xml;charset=utf-8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="220" height="310" viewBox="-110 -65 220 310">'+body+'</svg>')});
+const standing=person(0,0);
+const legs="M-32 118L-40 205h25l18-79 11 79h27l-13-92",arms="M-58 48l-32 75 21 10 37-65M42 47l40 58-19 15-38-50";
+const actionFrames:Project["assets"]=[
+ actorFrame("asha-idle-1","Idle · breathe",standing.replace('scale(1)','scale(1 .985)')),
+ actorFrame("asha-walk-1","Walk · contact L",standing.replace(legs,"M-32 118L-67 202h24l39-64 35 63h25l-29-83").replace(arms,"M-58 48l-18 60 20 11 31-55M42 47l23 73 20-9-25-73")),
+ actorFrame("asha-walk-2","Walk · passing L",standing.replace(legs,"M-32 118L-18 205H6l-10-72 23 45 22-8-14-52").replace(arms,"M-58 48l-18 75 20 8 27-67M42 47l29 62-20 11-23-62")),
+ actorFrame("asha-walk-3","Walk · contact R",standing.replace(legs,"M-32 118L-58 202h24l38-64 37 63h25l-39-83").replace(arms,"M-58 48l-30 56 18 14 39-54M42 47l19 76 20-9-15-76").replace('scale(1)','scale(-1 1)')),
+ actorFrame("asha-walk-4","Walk · passing R",standing.replace(legs,"M-32 118L-13 170 7 179l17-46-4 72h25l-18-87").replace(arms,"M-58 48l-30 60 20 11 37-55M42 47l23 76 21-8-25-70")),
+ actorFrame("asha-jump-1","Jump · crouch",person(0,45).replace('scale(1)','scale(1 .78)')),
+ actorFrame("asha-jump-2","Jump · lift",person(0,-12).replace(legs,"M-32 118l-29 48 20 15 40-41 36 38 21-16-29-44").replace(arms,"M-58 48l-35-32 12-17 48 39M42 47l40-49 17 14-41 60")),
+ actorFrame("asha-jump-3","Jump · apex",person(0,-18).replace(legs,"M-32 118l-39 37 20 22 46-35 35 29 24-15-27-38")),
+ actorFrame("asha-talk-1","Talk · gesture",standing.replace(arms,"M-58 48l-31 65 19 9 37-58M42 47l42 3 9 18-55 12")),
+ actorFrame("asha-talk-2","Talk · gesture raised",standing.replace(arms,"M-58 48l-37 15 6 20 51-17M42 47l35-19 16 16-45 29"))
+];
+const sampleActions:CharacterAction[]=[
+ {id:"action-asha-idle",characterId:"asha",name:"Idle",frames:["scene-asha","asha-idle-1","scene-asha","asha-idle-1"],fps:3,loop:true},
+ {id:"action-asha-walk",characterId:"asha",name:"Walk in place",frames:["asha-walk-1","asha-walk-2","asha-walk-3","asha-walk-4"],fps:8,loop:true},
+ {id:"action-asha-jump",characterId:"asha",name:"Jump",frames:["scene-asha","asha-jump-1","asha-jump-2","asha-jump-3","asha-jump-2","asha-jump-1","scene-asha"],fps:8,loop:false},
+ {id:"action-asha-talk",characterId:"asha",name:"Talk gesture",frames:["scene-asha","asha-talk-1","scene-asha","asha-talk-2"],fps:4,loop:true},
+ {id:"action-observer-signal",characterId:"observer-character",name:"Signal pulse",frames:["scene-observer","scene-observer-dim"],fps:3,loop:true}
+];
 function exampleScenes():NonNullable<Project["scenes"]>{return [{id:"composed-discovery",name:"01 · Discovery",storySceneId:"example-scene-1",backgroundId:"scene-city",seconds:4,camera:"None",caption:"Asha: Someone is still here?",objects:[
 {id:"scene-actor-asha",name:"Asha",kind:"character",characterId:"asha",assetId:"scene-asha",x:.12,y:.46,w:.39,h:.47,dialogue:"",rotation:0,opacity:1,flip:false,motion:"Slide in"},
 {id:"scene-actor-observer",name:"Observer",kind:"character",characterId:"observer-character",assetId:"scene-observer",x:.58,y:.35,w:.32,h:.22,dialogue:"",rotation:0,opacity:1,flip:false,motion:"Float"}
@@ -46,7 +69,7 @@ export function createExampleProject(id=EXAMPLE_ID):Project {
  return {id,name:"The last signal",format:"Motion comic",width:720,height:1280,fps:30,
  story:"LOGLINE\nIn an abandoned city, Asha discovers a signal that leads to a forgotten service drone. Together they restart the city beacon.\n\nWORLD\nA quiet post-collapse city at the edge of dawn. Technology is weathered but never magical.\n\nARC\n1. Discovery — a signal breaks eleven years of silence.\n2. Contact — the beacon leads Asha to the Observer.\n3. Resolution — the city wakes up.\n\nVISUAL RULES\nMuted teal, slate, warm amber; graphic-novel silhouettes. Asha keeps the same teal coat, amber scarf and dark visor. Observer has a hexagonal shell and turquoise light.\n\nTRY IT\nChange a scene or dialogue, resize a panel, then preview the linked page in Editor.",
  characters:[{id:"asha",name:"Asha",description:"A resourceful traveler. Teal coat, amber scarf, dark visor; cautious but hopeful."},{id:"observer-character",name:"Observer",description:"A small forgotten service drone. Hexagonal shell, turquoise light; protective and curious."}],
- assets:[...scenes.map(a=>({...a})),...sceneAssets,...extraPoses],scenes:exampleScenes(),
+ assets:[...scenes.map(a=>({...a})),...sceneAssets,...extraPoses,...actionFrames],characterActions:sampleActions.map(a=>({...a,frames:[...a.frames]})),scenes:exampleScenes(),
  production:{style:"Graphic novel • restrained teal/slate/amber palette • cinematic framing • consistent silhouettes",characterSheets:{asha:"asha-ref","observer-character":"observer-ref"},chapters:[{id:"example-chapter",title:"Chapter 1 · A voice in the silence",scenes:[{id:"example-scene-1",title:"Discovery",summary:"Asha crosses the empty city and detects an unexpected transmission.",characterIds:["asha"]},{id:"example-scene-2",title:"Contact",summary:"Asha follows the beacon, meets the Observer and watches the city wake.",characterIds:["asha","observer-character"]}]}],pages},
  sequence:{fps:30,duration:240,tracks:[{id:"video",name:"Video",kind:"video"},{id:"overlay",name:"Overlay",kind:"overlay"},{id:"text",name:"Text",kind:"text"},{id:"audio",name:"Audio",kind:"audio"}],clips:[
  {id:"example-clip-1",trackId:"video",name:"01 · The signal",start:0,end:120,pageId:pages[0].id,keyframes:[]},
@@ -55,4 +78,4 @@ export function createExampleProject(id=EXAMPLE_ID):Project {
  ]}};
 }
 // Add a separate example to old local workspaces. Never replace an edited project.
-export function ensureExample(projects:Project[]):Project[]{const existing=projects.find(p=>p.id===EXAMPLE_ID);if(!existing)return [createExampleProject(),...projects];const missing=[...sceneAssets,...extraPoses].filter(a=>!existing.assets.some(x=>x.id===a.id));if(existing.scenes!==undefined&&!missing.length)return projects;return projects.map(p=>p.id!==EXAMPLE_ID?p:{...p,scenes:p.scenes??exampleScenes(),assets:[...p.assets,...missing]})}
+export function ensureExample(projects:Project[]):Project[]{const existing=projects.find(p=>p.id===EXAMPLE_ID);if(!existing)return [createExampleProject(),...projects];const missing=[...sceneAssets,...extraPoses,...actionFrames].filter(a=>!existing.assets.some(x=>x.id===a.id));const actions=existing.characterActions??[];const missingActions=sampleActions.filter(a=>!actions.some(x=>x.id===a.id));if(existing.scenes!==undefined&&!missing.length&&!missingActions.length)return projects;return projects.map(p=>p.id!==EXAMPLE_ID?p:{...p,scenes:p.scenes??exampleScenes(),assets:[...p.assets,...missing],characterActions:[...actions,...missingActions.map(a=>({...a,frames:[...a.frames]}))]})}

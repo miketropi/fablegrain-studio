@@ -3,3 +3,6 @@ The sample opens Scene Composer, not the timeline. Separate background, transpar
 
 ## 0.13.0 — focused workspace and manual motion
 Scene Composer owns its full workspace. Manual animation uses integer project frames and normalized transforms; enable Animate at playhead, scrub, then move/resize or change rotation/opacity, or set a key. Linear interpolation, explicit key removal and frame markers are supported. Manual keys override presets; clearing keys restores presets. Pose cycling uses ordered pose images and FPS, not skeletal rigs. The example includes two additional pose images. Existing scene edits and timeline are retained. No audio, generated video, advanced easing or server persistence yet.
+
+## 0.14.0 — workflow handoff
+Appending a scene selects the new clip and seeks to its first frame. Open scene source returns to the corresponding scene. Still to comic selects the newly created page. The composer remembers the active scene while navigating within a project. Click/drag insertion suppresses duplicate click events after a drag. Added compact workflow hints. Still-to-comic remains a flattened snapshot; no live comic link yet.

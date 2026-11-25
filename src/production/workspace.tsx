@@ -15,11 +15,11 @@ import type {Project} from "../studio/project";
 import {boundPanel,continuity,emptyProduction,makePage,reorder,type ComicPage,type Panel,type StoryProduction} from "./model";
 import {exportPng,exportMotion} from "./render";
 import "./production.css";
-type Props={project:Project;update:(patch:Partial<Project>)=>void;initialTab?:string};
+type Props={project:Project;update:(patch:Partial<Project>)=>void;initialTab?:string;initialPageId?:string};
 const uid=()=>crypto.randomUUID();
-export default function Production({project,update,initialTab="Story map"}:Props){
+export default function Production({project,update,initialTab="Story map",initialPageId=""}:Props){
   const p=project.production??emptyProduction();
-  const [tab,setTab]=useState(initialTab),[pageId,setPageId]=useState(""),[panelIds,setPanelIds]=useState<string[]>([]),[status,setStatus]=useState(""),[busy,setBusy]=useState(false),[progress,setProgress]=useState(0);
+  const [tab,setTab]=useState(initialTab),[pageId,setPageId]=useState(initialPageId),[panelIds,setPanelIds]=useState<string[]>([]),[status,setStatus]=useState(""),[busy,setBusy]=useState(false),[progress,setProgress]=useState(0);
   const abort=useRef<AbortController|null>(null);
   const histories=useRef(new Map<string,ReturnType<typeof createUndoStack<ComicPage>>>());
   useEffect(()=>()=>abort.current?.abort(),[]);

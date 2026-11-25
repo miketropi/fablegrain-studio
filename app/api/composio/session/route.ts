@@ -12,6 +12,8 @@ export async function POST(request:Request){
     const create=await fetch(base,{method:"POST",headers,body:JSON.stringify({user_id:user,toolkits:{enable:enabled},instant:false,manage_connections:{enable:false}}),signal:AbortSignal.timeout(20000),cache:"no-store"});
     if(!create.ok)return Response.json({error:"Composio session creation failed ("+create.status+")"},{status:502});
     const data=await create.json(),id=data.session_id;
+    const actual=data.config?.toolkits?.enabled;
+    if(!Array.isArray(actual)||actual.length!==enabled.length||enabled.some(t=>!actual.includes(t))||data.config?.instant!==false)return Response.json({error:"Composio did not confirm the required restricted session policy"},{status:502});
     if(typeof id!=="string"||!/^trs_[a-zA-Z0-9_-]+$/.test(id))return Response.json({error:"Invalid session response"},{status:502});
     const list=await fetch(base+"/"+encodeURIComponent(id)+"/tools?limit=100",{headers,signal:AbortSignal.timeout(20000),cache:"no-store"});
     if(!list.ok)return Response.json({error:"Tool discovery failed ("+list.status+")"},{status:502});

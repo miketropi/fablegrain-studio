@@ -62,3 +62,7 @@ Timeline now includes compatible-track transfer and interpolation primitives (dr
 The Editor can append comic pages as image clips and bind page/image assets and text to timeline clips. It now draws a canvas composition from active clips with linear opacity keyframes, supports adding same-kind tracks and compatible cross-track pointer moves, and offers silent browser WebM timeline export. Export refuses unresolved sources or audio clips. The browser encoder is real-time and capped at 30 FPS and 120 seconds, not deterministic offline MP4 rendering. Source video/audio import, source offsets, audio sync, transforms, and multi-selection remain pending.
 
 Milestone 1 model/timeline tests were executed with Node 22.16: 14/14 passed, with matching Git blob hashes. The newly added composition tests and complete application build/browser/provider checks still require verification. No npm lockfile is available.
+
+## Verification update
+
+All 16 pure model/sequence unit tests pass under Node 22.16; the six test/source files were checked against their committed Git blob hashes. The cross-track drag draft now preserves the original DOM parent until commit to avoid losing pointer capture. This interaction has not yet been verified in a browser. The Composio route additionally rejects session responses that do not confirm the configured allowlist and disabled instant usage. Provider behavior is unverified. The full application still needs dependency installation, typecheck, build and browser QA.

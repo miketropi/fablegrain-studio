@@ -22,20 +22,20 @@ export default function Timeline({sequence,onCommit,frame,setFrame,selected,setS
   },[playing,sequence.duration,sequence.fps]);
   function drag(e:ReactPointerEvent<HTMLElement>,clip:Clip,mode:Edit){
     if(e.button!==0)return;
-    e.stopPropagation();setPlaying(false);setSelected(clip.id);cleanup.current?.();
+    e.stopPropagation();setPlaying(false);setSelected(clip.id);cleanup.current?.();setDraft(null);
     const initial=e.clientX;let result=sequence; const surface=e.currentTarget.closest('.time-surface');
     cleanup.current=bindDrag(e.currentTarget,e.nativeEvent,{threshold:3,cancelOnEscape:true,onMove:({x,y})=>{const delta=frameAt(x-initial,pixels);const target=surface?.querySelectorAll<HTMLElement>("[data-track-id]");const row=target&&Array.from(target).find(el=>{const r=el.getBoundingClientRect();return y>=r.top&&y<r.bottom});const id=row?.dataset.trackId;result=mode==="move"&&id&&id!==clip.trackId?moveToTrack(sequence,clip.id,id,clip.start+delta):editClip(sequence,clip.id,mode,delta,snap?Math.ceil(7/pixels):0,frame);setDraft(result)},onEnd:(_event,canceled)=>{setDraft(null);if(!canceled&&result!==sequence)onCommit(result);cleanup.current=undefined}});
   }
   function scrub(e:ReactPointerEvent<HTMLDivElement>){
     if(e.button!==0)return;
-    setPlaying(false);cleanup.current?.();
+    setPlaying(false);cleanup.current?.();setDraft(null);
     const el=e.currentTarget, origin=el.getBoundingClientRect().left, previous=frame;
     const seek=(x:number)=>setFrame(clamp(frameAt(x-origin,pixels),0,sequence.duration));
     seek(e.clientX);
     cleanup.current=bindDrag(el,e.nativeEvent,{threshold:0,cancelOnEscape:true,onMove:({x})=>seek(x),onEnd:(_event,canceled)=>{if(canceled)setFrame(previous);cleanup.current=undefined}});
   }
   function addClip(){
-    const track=sequence.tracks[0];
+    const track=sequence.tracks.find(t=>t.id===active?.trackId)??sequence.tracks[0];
     if(!track)return;
     const start=Math.max(0,...sequence.clips.filter(c=>c.trackId===track.id).map(c=>c.end));
     const end=start+sequence.fps*2,id=crypto.randomUUID();
@@ -56,8 +56,8 @@ export default function Timeline({sequence,onCommit,frame,setFrame,selected,setS
     <div className="timeline-scroll"><div className="track-labels"><div className="ruler-label">TRACK</div>{current.tracks.map(t=><div key={t.id} className="track-label">{t.name}</div>)}</div>
     <div className="time-surface" style={{width:Math.max(1,sequence.duration*pixels),minWidth:Math.max(1,sequence.duration*pixels)}}><div className="ruler" onPointerDown={scrub} role="slider" tabIndex={0} aria-label="Playhead" aria-valuemin={0} aria-valuemax={sequence.duration} aria-valuenow={frame} onKeyDown={e=>{if(["ArrowLeft","ArrowRight","Home","End"].includes(e.key)){e.preventDefault();setPlaying(false);setFrame(e.key==="Home"?0:e.key==="End"?sequence.duration:clamp(frame+(e.key==="ArrowLeft"?-1:1),0,sequence.duration))}}}>
       {Array.from({length:Math.floor(sequence.duration/sequence.fps)+1},(_,i)=>i).map(i=><span key={i} style={{left:i*sequence.fps*pixels}}>{i}s</span>)}</div>
-      {current.tracks.map(t=><div className="track" data-track-id={t.id} key={t.id} style={{backgroundSize:sequence.fps*pixels+"px 100%"}}>{current.clips.filter(c=>c.trackId===t.id).map(c=><div key={c.id} role="button" tabIndex={0} aria-label={c.name} aria-pressed={selected===c.id} data-kind={t.kind} className={"clip "+(selected===c.id?"selected":"")} style={{left:c.start*pixels,width:(c.end-c.start)*pixels}} onPointerDown={e=>drag(e,c,"move")} onFocus={()=>setSelected(c.id)} onKeyDown={e=>{if(e.key==="Enter"||e.key===" ") {e.preventDefault();setSelected(c.id)} else if(e.key==="ArrowLeft"||e.key==="ArrowRight"){e.preventDefault();onCommit(editClip(sequence,c.id,"move",e.key==="ArrowLeft"?-1:1))}}}>
-        <span className="trim left" onPointerDown={e=>drag(e,c,"trim-start")}/><span className="clip-name">{c.name}</span><span className="trim right" onPointerDown={e=>drag(e,c,"trim-end")}/>{c.keyframes.map(k=><i key={k.frame} className="keyframe" style={{left:k.frame*pixels}}/>)}</div>)}</div>)}
+      {current.tracks.map(t=><div className="track" data-track-id={t.id} key={t.id} style={{backgroundSize:sequence.fps*pixels+"px 100%"}}>{sequence.clips.filter(c=>c.trackId===t.id).map(original=>{const c=current.clips.find(x=>x.id===original.id)??original;const y=(current.tracks.findIndex(x=>x.id===c.trackId)-current.tracks.findIndex(x=>x.id===original.trackId))*39;return <div key={c.id} role="button" tabIndex={0} aria-label={c.name} aria-pressed={selected===c.id} data-kind={t.kind} className={"clip "+(selected===c.id?"selected":"")} style={{left:c.start*pixels,width:(c.end-c.start)*pixels,transform:y?"translateY("+y+"px)":undefined,zIndex:y?3:undefined}} onPointerDown={e=>drag(e,original,"move")} onFocus={()=>setSelected(c.id)} onKeyDown={e=>{if(e.key==="Enter"||e.key===" ") {e.preventDefault();setSelected(c.id)} else if(e.key==="ArrowLeft"||e.key==="ArrowRight"){e.preventDefault();onCommit(editClip(sequence,c.id,"move",e.key==="ArrowLeft"?-1:1))}}}>
+        <span className="trim left" onPointerDown={e=>drag(e,original,"trim-start")}/><span className="clip-name">{c.name}</span><span className="trim right" onPointerDown={e=>drag(e,original,"trim-end")}/>{c.keyframes.map(k=><i key={k.frame} className="keyframe" style={{left:k.frame*pixels}}/>)}</div>})}</div>)}
       <div className="playhead" style={{left:frame*pixels}}/>
     </div></div>
   </section>;

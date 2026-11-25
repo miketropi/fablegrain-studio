@@ -1,0 +1,10 @@
+import {test} from "node:test";
+import assert from "node:assert/strict";
+import {createSequence,editClip,splitClip,addKeyframe,timecode,frameAt} from "./timeline.ts";
+test("frame math",()=>{assert.equal(frameAt(42,2),21);assert.equal(timecode(126,30),"00:04:06")});
+test("move respects adjacent clips",()=>{const s=createSequence(30);assert.equal(editClip(s,"scene","move",20),s);assert.equal(editClip(s,"character","move",-100).clips.find(c=>c.id==="character")?.start,0)});
+test("trim keeps a minimum of one frame",()=>{const s=editClip(createSequence(30),"opening","trim-end",-999);assert.equal(s.clips[0].end,1)});
+test("snap to playhead",()=>{const s=editClip(createSequence(30),"character","move",13,3,45);assert.equal(s.clips.find(c=>c.id==="character")?.start,45)});
+test("split and remap keyframes",()=>{let s=createSequence(30);s=addKeyframe(s,"opening",90);s=splitClip(s,"opening",60,"new");assert.equal(s.clips.find(c=>c.id==="new")?.keyframes[0].frame,30);assert.equal(s.clips.find(c=>c.id==="opening")?.end,60)});
+test("reject invalid keyframe",()=>{const s=createSequence(30);assert.equal(addKeyframe(s,"opening",120),s)});
+test("trimming start remaps retained keyframes",()=>{let s=addKeyframe(createSequence(30),"opening",40);s=editClip(s,"opening","trim-start",10);assert.equal(s.clips[0].keyframes[0].frame,30)});

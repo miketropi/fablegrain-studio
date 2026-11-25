@@ -1,13 +1,14 @@
 {
   "name": "fablegrain-studio",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test src/editor/timeline.test.ts src/production/model.test.ts src/editor/composition.test.ts src/ai/prompt.test.ts"
+    "test": "node --experimental-strip-types --test src/editor/timeline.test.ts src/production/model.test.ts src/editor/composition.test.ts src/ai/prompt.test.ts",
+    "test:e2e": "playwright test"
   },
   "engines": {
     "node": ">=22.22.3"
@@ -26,7 +27,8 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.0.0",
-    "typescript": "^5.9.0"
+    "typescript": "^5.9.0",
+    "@playwright/test": "^1.56.0"
   },
   "type": "module"
 }

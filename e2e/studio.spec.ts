@@ -1,0 +1,43 @@
+import {test,expect} from "@playwright/test";
+test("deployed or local project creation, navigation and persistence",async({page})=>{
+ const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));
+ const response=await page.goto("/");expect(response?.ok()).toBeTruthy();
+ await expect(page.getByRole("heading",{name:"New project"})).toBeVisible();
+ await page.getByLabel("Project name").fill("Browser QA — temporary");
+ await page.getByLabel("Format",{exact:true}).selectOption("Comic");
+ await page.getByRole("button",{name:"Create project"}).click();
+ await expect(page.getByRole("main")).toContainText("Browser QA — temporary");
+ await page.getByRole("navigation",{name:"Workspace"}).getByRole("button",{name:"Story",exact:true}).click();
+ await page.getByRole("textbox",{name:"Story bible"}).fill("QA story");
+ await page.getByRole("navigation",{name:"Workspace"}).getByRole("button",{name:"Characters",exact:true}).click();
+ await page.getByLabel("Name",{exact:true}).fill("Test character");
+ await page.getByLabel("Description",{exact:true}).fill("Test only");
+ await page.getByRole("button",{name:"Add character"}).click();
+ await expect(page.getByText("Test character",{exact:true}).first()).toBeVisible();
+ await page.getByRole("button",{name:"Back to projects"}).click();
+ await page.reload();
+ await page.getByRole("button",{name:/Browser QA — temporary/}).click();
+ await page.getByRole("navigation",{name:"Workspace"}).getByRole("button",{name:"Story",exact:true}).click();
+ await expect(page.getByRole("textbox",{name:"Story bible"})).toHaveValue("QA story");
+ expect(errors).toEqual([]);
+});
+test("local UI: compact workspace panels and timeline resize",async({page})=>{
+ test.skip(!!process.env.E2E_BASE_URL,"New UI assertions require the newly built version");
+ await page.goto("/");await page.getByRole("button",{name:/The last signal/}).click();
+ await expect(page.getByRole("region",{name:"Timeline editor"})).toBeVisible();
+ await page.getByRole("button",{name:"Toggle library"}).click();
+ await expect(page.locator(".workspace")).toHaveAttribute("data-library","false");
+ await page.getByRole("button",{name:"Toggle library"}).click();
+ await expect(page.locator(".workspace")).toHaveAttribute("data-library","true");
+ const resize=page.getByRole("separator",{name:"Resize timeline"});const before=await page.locator(".timeline").boundingBox();
+ await resize.focus();await page.keyboard.press("ArrowUp");const after=await page.locator(".timeline").boundingBox();expect(after!.height).toBeGreaterThan(before!.height);
+ await page.setViewportSize({width:390,height:844});
+ await page.getByRole("button",{name:"Toggle inspector"}).click();await expect(page.locator(".inspector")).toBeVisible();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(391);
+});
+test("local UI: project begins with story and hides video FPS for comic",async({page})=>{
+ test.skip(!!process.env.E2E_BASE_URL,"New UI assertions require the newly built version");
+ await page.goto("/");await page.getByLabel("Format",{exact:true}).selectOption("Comic");await expect(page.getByLabel("Frame rate")).toHaveCount(0);
+ await page.getByLabel("Project name").fill("Fresh comic");await page.getByRole("button",{name:"Create project"}).click();
+ await expect(page.getByRole("textbox",{name:"Story bible"})).toBeVisible();await expect(page.getByRole("region",{name:"Timeline editor"})).toHaveCount(0);
+});

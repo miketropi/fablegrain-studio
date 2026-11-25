@@ -22,3 +22,32 @@ jobs:
       - run: npm test
       - run: npm run typecheck
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - name: Upload browser QA on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-qa
+          path: test-results/
+          if-no-files-found: ignore
+  deployed-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      E2E_BASE_URL: https://fablegrain-studio.beplus-agency.cloud/
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.3'
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - name: Upload deployed browser QA on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployed-browser-qa
+          path: test-results/
+          if-no-files-found: ignore

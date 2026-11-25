@@ -1,5 +1,5 @@
 import {test,expect,type Page} from "@playwright/test";
-async function chooseComic(page:Page){const field=page.getByLabel("Format",{exact:true}).first();if(await field.evaluate(el=>el.tagName==="SELECT")){await field.selectOption("Comic")}else{await field.click();await page.getByRole("option",{name:"Comic",exact:true}).click()}}
+async function chooseComic(page:Page){const label=page.getByLabel("Format",{exact:true});const form=page.locator("form").filter({has:page.getByLabel("Project name")});const field=(await label.count())?label.first():form.getByRole("combobox").first();if(await field.evaluate(el=>el.tagName==="SELECT")){await field.selectOption("Comic")}else{await field.click();await page.getByRole("option",{name:"Comic",exact:true}).click()}}
 test("deployed or local project creation, navigation and persistence",async({page})=>{
  const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));
  const response=await page.goto("/");expect(response?.ok()).toBeTruthy();
@@ -26,6 +26,7 @@ test("local UI: compact workspace panels and timeline resize",async({page})=>{
  test.skip(!!process.env.E2E_BASE_URL,"New UI assertions require the newly built version");
  await page.goto("/");await page.getByRole("button",{name:/The last signal/}).click();
  await expect(page.getByRole("region",{name:"Timeline editor"})).toBeVisible();
+ const libraryHandle=page.getByRole("separator",{name:"Resize library"});const initial=await page.locator(".library").boundingBox();await libraryHandle.focus();await page.keyboard.press("ArrowRight");await expect.poll(async()=> (await page.locator(".library").boundingBox())!.width).toBeGreaterThan(initial!.width);
  await page.getByRole("button",{name:"Toggle library"}).click();
  await expect(page.locator(".workspace")).toHaveAttribute("data-library","false");
  await page.getByRole("button",{name:"Toggle library"}).click();
@@ -60,4 +61,22 @@ test("local UI uses SDK controls and production tabs",async({page})=>{
  await expect(page.locator('[data-slot="number-input-control"]').first()).toBeVisible();
  await expect(page.locator('[data-slot="file-input-trigger"]')).toBeVisible();
  await page.screenshot({path:"test-results/studio-comic.png"});
+});
+
+test("local UI: SDK tree, track menu and export dialog",async({page})=>{
+ test.skip(!!process.env.E2E_BASE_URL,"Requires new UI");
+ await page.goto("/");await page.getByRole("button",{name:/The last signal/}).click();
+ const tree=page.getByRole("tree",{name:"Project library tree"});await expect(tree).toBeVisible();
+ const branch=tree.getByRole("treeitem",{name:/Characters/}).first();await branch.focus();await page.keyboard.press("ArrowLeft");await expect(branch).toHaveAttribute("aria-expanded","false");await page.keyboard.press("ArrowRight");await expect(branch).toHaveAttribute("aria-expanded","true");
+ await page.getByRole("button",{name:"Track",exact:true}).click();await page.getByRole("menuitem",{name:"Text track",exact:true}).click();
+ await expect(page.locator(".track-label").filter({hasText:/text 2/i})).toBeVisible();
+ const trigger=page.getByRole("button",{name:"Export project JSON"});await trigger.click();await expect(page.getByRole("dialog",{name:"Export project"})).toBeVisible();await page.keyboard.press("Escape");await expect(page.getByRole("dialog",{name:"Export project"})).toBeHidden();await expect(trigger).toBeFocused();
+ await trigger.click();const download=page.waitForEvent("download");await page.getByRole("button",{name:"Download JSON"}).click();expect((await download).suggestedFilename()).toMatch(/\.fablegrain\.json$/);
+ await page.screenshot({path:"test-results/studio-editor.png"});
+});
+test("deployed build identity",async({page,request})=>{
+ test.skip(!process.env.E2E_BASE_URL,"Deployment identity check only");
+ const response=await request.get("/api/version");expect(response.ok(),"Deployment must expose its version; redeploy the latest source first").toBeTruthy();
+ const identity=await response.json();console.log("Deployed version:",identity.version);
+ await page.goto("/");await expect(page.locator("main[data-app-version]")).toHaveAttribute("data-app-version",identity.version);
 });

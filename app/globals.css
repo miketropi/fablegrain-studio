@@ -42,3 +42,24 @@ body{font-feature-settings:"cv11","ss01";line-height:1.45}button{transition:back
 @media(max-width:800px){.workspace[data-mobile-panel=library] .library,.workspace[data-mobile-panel=inspector] .inspector{visibility:visible;display:block}}
 [data-slot="number-input-group"]{min-width:0;width:100%}
 [data-slot="number-input-control"]{min-width:0;flex:1;width:100%}
+
+/* SDK horizontal layout. Compact view retains a separate overlay layout. */
+.workspace .workbody{display:flex;min-height:0;min-width:0;flex:1}
+.workspace .rail{width:64px;flex:0 0 64px}
+.workspace-split{flex:1;min-width:0;min-height:0}
+.workspace-pane{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.workspace-pane>.library,.workspace-pane>.inspector,.workspace-pane>.center{width:100%;height:100%;min-width:0;min-height:0;flex:1}
+.workspace-pane>.library,.workspace-pane>.inspector{visibility:visible}
+.compact-workspace{flex:1;min-width:0;min-height:0;display:flex;position:relative}
+.compact-workspace>.center{width:100%;height:100%}
+.library-actions{display:flex;gap:4px;margin:12px 0;flex-wrap:wrap}
+.library-actions button{font-size:11px}
+.library [data-slot="tree-label"]{min-width:0;gap:5px}
+.library [data-slot="tree-label"] span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.library [data-slot="tree-label"] small{margin-left:auto;color:var(--muted);font-size:10px}
+.tree-thumb{width:23px;height:23px;object-fit:cover;border-radius:3px;flex-shrink:0}
+.studio-dialog{max-width:min(420px,calc(100vw - 32px))}
+.export-details{display:grid;grid-template-columns:auto minmax(0,1fr);gap:9px;font-size:12px}
+.export-details dt{color:var(--muted)}
+.export-details dd{margin:0;text-align:right;overflow-wrap:anywhere}
+@media(max-width:800px){.workspace .rail{width:56px;flex-basis:56px}.workspace .compact-workspace .library{left:0}.workspace .compact-workspace .inspector{right:0}.workspace .compact-workspace .library,.workspace .compact-workspace .inspector{width:min(250px,100%)}}

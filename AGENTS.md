@@ -6,3 +6,7 @@
 - Preserve project data; no provider keys or secrets in browser or repository. Composio outbound tools and inbound project MCP must be server-side, scoped and auditable.
 - Never claim media generation, rendering or production readiness until tested. Placeholder data and media must be labeled.
 - Before a merge run npm test, npm run typecheck and npm run build; add a lockfile after resolving real UI SDK versions. Do not bypass release-age policies.
+
+## UI SDK native gate (mandatory)
+
+Use official SDK component parts for all available controls. Do not imitate SDK roles/slots or write native equivalents. Read installed docs in CI or locally; consult the official website when unavailable and record that limitation. Retain web.css as the component style baseline. Custom CSS is for app layout and domain surfaces only; no global button/input/select styling. Document every custom interaction exception. Build and test are necessary but do not certify visual parity; inspect actual screenshots before declaring a UI release visually approved.

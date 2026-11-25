@@ -1,4 +1,6 @@
 "use client";
+import { Slider, SliderControl, SliderTrack, SliderIndicator, SliderThumb } from "@ui-sdk/react/slider";
+import { Toggle } from "@ui-sdk/react/toggle";
 import {useEffect,useRef,useState,type PointerEvent as ReactPointerEvent} from "react";
 import {bindDrag} from "@ui-sdk/core";
 import {Toolbar,ToolbarButton,ToolbarSeparator} from "@ui-sdk/react/toolbar";
@@ -7,7 +9,7 @@ import {addKeyframe,clamp,editClip,frameAt,splitClip,timecode,moveToTrack,type C
 
 type Props={sequence:Sequence; onCommit:(s:Sequence)=>void; frame:number; setFrame:(f:number)=>void; selected:string|null; setSelected:(id:string|null)=>void; undo:()=>void; redo:()=>void; canUndo:boolean; canRedo:boolean};
 export default function Timeline({sequence,onCommit,frame,setFrame,selected,setSelected,undo,redo,canUndo,canRedo}:Props){
-  const [height,setHeight]=useState(248),[zoom,setZoom]=useState(1),[snap,setSnap]=useState(true),[playing,setPlaying]=useState(false),[draft,setDraft]=useState<Sequence|null>(null);
+  const [zoom,setZoom]=useState(1),[snap,setSnap]=useState(true),[playing,setPlaying]=useState(false),[draft,setDraft]=useState<Sequence|null>(null);
   const cleanup=useRef<(()=>void)|undefined>(undefined);
   const pixels=zoom*3, current=draft??sequence, active=sequence.clips.find(c=>c.id===selected);
   useEffect(()=>()=>cleanup.current?.(),[]);
@@ -41,8 +43,7 @@ export default function Timeline({sequence,onCommit,frame,setFrame,selected,setS
     const end=start+sequence.fps*2,id=crypto.randomUUID();
     onCommit({...sequence,duration:Math.max(sequence.duration,end),clips:[...sequence.clips,{id,trackId:track.id,name:"New clip",start,end,keyframes:[]}]});setSelected(id);
   }
-  return <section className="timeline" aria-label="Timeline editor" style={{"--timeline-height":height+"px"} as React.CSSProperties}><div className="timeline-resize" role="separator" aria-label="Resize timeline" aria-orientation="horizontal" tabIndex={0} onKeyDown={e=>{if(e.key==="ArrowUp"||e.key==="ArrowDown"){e.preventDefault();setHeight(h=>clamp(h+(e.key==="ArrowUp"?16:-16),170,Math.min(500,window.innerHeight*.6)))}}} onPointerDown={e=>{if(e.button!==0)return;cleanup.current?.();const start=e.clientY,initial=height;cleanup.current=bindDrag(e.currentTarget,e.nativeEvent,{threshold:0,cancelOnEscape:true,onMove:({y})=>setHeight(clamp(initial+start-y,170,Math.max(170,Math.min(500,window.innerHeight*.6)))),onEnd:(_e,cancelled)=>{if(cancelled)setHeight(initial);cleanup.current=undefined}})}}/>
-    <div className="timeline-bar"><strong>Timeline <small>{sequence.clips.length} clips</small></strong><Toolbar aria-label="Timeline tools" className="tools">
+  return <section className="timeline" aria-label="Timeline editor"><div className="timeline-bar"><strong>Timeline <small>{sequence.clips.length} clips</small></strong><Toolbar aria-label="Timeline tools" className="tools">
       <ToolbarButton title="Undo" aria-label="Undo" disabled={!canUndo} onClick={undo}><Undo2/></ToolbarButton>
       <ToolbarButton title="Redo" aria-label="Redo" disabled={!canRedo} onClick={redo}><Redo2/></ToolbarButton><ToolbarSeparator/>
       <ToolbarButton title="Start" aria-label="Start" onClick={()=>{setPlaying(false);setFrame(0)}}><SkipBack/></ToolbarButton>
@@ -52,7 +53,7 @@ export default function Timeline({sequence,onCommit,frame,setFrame,selected,setS
       <ToolbarButton title="Snapping" aria-label="Snapping" aria-pressed={snap} onClick={()=>setSnap(!snap)}><Magnet/></ToolbarButton>
       <ToolbarButton title="Add placeholder clip" aria-label="Add clip" onClick={addClip}><Plus/></ToolbarButton>
       <ToolbarButton title="Delete clip" aria-label="Delete clip" disabled={!active} onClick={()=>{onCommit({...sequence,clips:sequence.clips.filter(c=>c.id!==selected)});setSelected(null)}}><Trash2/></ToolbarButton>
-    </Toolbar><output className="timecode">{timecode(frame,sequence.fps)} <span>/ {timecode(sequence.duration,sequence.fps)}</span></output><label className="zoom">Zoom <input aria-label="Timeline zoom" type="range" min=".5" max="4" step=".25" value={zoom} onChange={e=>setZoom(Number(e.target.value))}/></label></div>
+    </Toolbar><output className="timecode">{timecode(frame,sequence.fps)} <span>/ {timecode(sequence.duration,sequence.fps)}</span></output><label className="zoom">Zoom <Slider min={0.5} max={4} step={0.25} value={zoom} onValueChange={setZoom} className="timeline-slider"><SliderControl><SliderTrack><SliderIndicator/><SliderThumb aria-label="Timeline zoom"/></SliderTrack></SliderControl></Slider></label></div>
     <div className="timeline-scroll"><div className="track-labels"><div className="ruler-label">TRACK</div>{current.tracks.map(t=><div key={t.id} className="track-label">{t.name}</div>)}</div>
     <div className="time-surface" style={{width:Math.max(1,sequence.duration*pixels),minWidth:Math.max(1,sequence.duration*pixels)}}><div className="ruler" onPointerDown={scrub} role="slider" tabIndex={0} aria-label="Playhead" aria-valuemin={0} aria-valuemax={sequence.duration} aria-valuenow={frame} onKeyDown={e=>{if(["ArrowLeft","ArrowRight","Home","End"].includes(e.key)){e.preventDefault();setPlaying(false);setFrame(e.key==="Home"?0:e.key==="End"?sequence.duration:clamp(frame+(e.key==="ArrowLeft"?-1:1),0,sequence.duration))}}}>
       {Array.from({length:Math.floor(sequence.duration/sequence.fps)+1},(_,i)=>i).map(i=><span key={i} style={{left:i*sequence.fps*pixels}}>{i}s</span>)}</div>

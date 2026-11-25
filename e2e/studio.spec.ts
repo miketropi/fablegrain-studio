@@ -1,10 +1,11 @@
-import {test,expect} from "@playwright/test";
+import {test,expect,type Page} from "@playwright/test";
+async function chooseComic(page:Page){const field=page.getByLabel("Format",{exact:true}).first();if(await field.evaluate(el=>el.tagName==="SELECT")){await field.selectOption("Comic")}else{await field.click();await page.getByRole("option",{name:"Comic",exact:true}).click()}}
 test("deployed or local project creation, navigation and persistence",async({page})=>{
  const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));
  const response=await page.goto("/");expect(response?.ok()).toBeTruthy();
  await expect(page.getByRole("heading",{name:"New project"})).toBeVisible();
  await page.getByLabel("Project name").fill("Browser QA — temporary");
- await page.getByLabel("Format",{exact:true}).selectOption("Comic");
+ await chooseComic(page);
  await page.getByRole("button",{name:"Create project"}).click();
  await expect(page.getByRole("main")).toContainText("Browser QA — temporary");
  await page.getByRole("navigation",{name:"Workspace"}).getByRole("button",{name:"Story",exact:true}).click();
@@ -37,7 +38,23 @@ test("local UI: compact workspace panels and timeline resize",async({page})=>{
 });
 test("local UI: project begins with story and hides video FPS for comic",async({page})=>{
  test.skip(!!process.env.E2E_BASE_URL,"New UI assertions require the newly built version");
- await page.goto("/");await page.getByLabel("Format",{exact:true}).selectOption("Comic");await expect(page.getByLabel("Frame rate")).toHaveCount(0);
+ await page.goto("/");await chooseComic(page);await expect(page.getByLabel("Frame rate")).toHaveCount(0);
  await page.getByLabel("Project name").fill("Fresh comic");await page.getByRole("button",{name:"Create project"}).click();
  await expect(page.getByRole("textbox",{name:"Story bible"})).toBeVisible();await expect(page.getByRole("region",{name:"Timeline editor"})).toHaveCount(0);
+});
+
+test("local UI uses SDK controls and production tabs",async({page})=>{
+ test.skip(!!process.env.E2E_BASE_URL,"Requires new UI");
+ await page.goto("/");
+ await expect(page.locator('[data-slot="select-trigger"]').first()).toBeVisible();
+ await expect(page.locator('select')).toHaveCount(0);
+ await chooseComic(page);await page.getByLabel("Project name").fill("SDK comic");
+ await page.getByRole("button",{name:"Create project"}).click();
+ await page.getByRole("navigation",{name:"Workspace"}).getByRole("button",{name:"Production",exact:true}).click();
+ await page.getByRole("tab",{name:"Comic pages"}).click();
+ await expect(page.getByRole("tabpanel")).toBeVisible();
+ await page.getByRole("button",{name:"+ Page",exact:true}).click();
+ await expect(page.locator(".comic-panel")).toHaveCount(3);
+ await expect(page.locator('[data-slot="file-input-trigger"]')).toBeVisible();
+ await page.screenshot({path:"test-results/studio-comic.png"});
 });

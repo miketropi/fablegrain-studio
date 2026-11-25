@@ -1,0 +1,7 @@
+# UI SDK native migration (0.6.0)
+
+Official references consulted: https://ui-sdk.dev/docs/react/components/select, /input, /textarea, /checkbox, /field, /tabs, /slider, /resizable, /scroll-area, /file-input, /progress, /toggle (relative to the components URL). Public docs search was accessible; direct package documentation could not be read in the authoring environment. CI verifies its presence.
+
+Migrated: native text inputs and textareas, select/option, checkboxes, file pickers, export progress, production tabs, timeline zoom, workspace library and inspector scroll areas, visibility toggles and vertical workspace/timeline resizer. Actual SDK components and composition wrappers, not CSS imitations. Removed global button/input/select/textarea styling overrides; retained layout styles and the official web.css import.
+
+Remaining custom surfaces: timeline clip placement/drag/trim/scrub, comic panel placement/drag, app navigation layout, responsive overlay behavior and horizontal side pane layout. These use domain logic and/or SDK bindDrag where applicable. createSpans, selection, horizontal Resizable, Dialog, NumberField and richer asset Tree are not implemented in this pass. Some numeric fields use SDK Input with native number type; migrate after checking NumberField API and preserving commit semantics. Visual parity with official examples requires screenshot review; build passing does not certify that. No changes to persistence schema or API behavior.

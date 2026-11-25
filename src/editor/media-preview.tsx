@@ -1,4 +1,5 @@
 "use client";
+import { ExportProgress } from "../ui/controls";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {Button} from "@ui-sdk/react/button";
 import type {Project} from "../studio/project";
@@ -52,5 +53,5 @@ export default function MediaPreview({project,frame}:{project:Project;frame:numb
       if(recorder.state!=="inactive")recorder.stop();const blob=await result;if(controller.signal.aborted)throw Error("Canceled");if(!blob.size)throw Error("No frames recorded");download(blob,"timeline.webm");setStatus("Export complete");
     }catch(e){setStatus(e instanceof Error?e.message:"Export failed")}finally{stream?.getTracks().forEach(t=>t.stop());setBusy(false);abort.current=null}
   }
-  return <><div className="stage"><canvas ref={canvas} width={project.width} height={project.height} aria-label="Timeline visual preview" style={{maxWidth:"100%",maxHeight:"100%",objectFit:"contain",background:"#121316",boxShadow:"0 8px 35px #0007"}}/></div><div className="canvas-foot" style={{gap:8,flexWrap:"wrap"}}><span>{status||(!cache?"Loading visual sources…":"Image, comic and text preview · silent")}</span>{busy&&<progress value={progress} max={1}/>}<Button disabled={busy||!cache} onClick={()=>void output()}>Export timeline WebM</Button>{busy&&<Button onClick={()=>abort.current?.abort()}>Cancel</Button>}</div></>
+  return <><div className="stage"><canvas ref={canvas} width={project.width} height={project.height} aria-label="Timeline visual preview" style={{maxWidth:"100%",maxHeight:"100%",objectFit:"contain",background:"#121316",boxShadow:"0 8px 35px #0007"}}/></div><div className="canvas-foot" style={{gap:8,flexWrap:"wrap"}}><span>{status||(!cache?"Loading visual sources…":"Image, comic and text preview · silent")}</span>{busy&&<ExportProgress value={progress}/>}<Button disabled={busy||!cache} onClick={()=>void output()}>Export timeline WebM</Button>{busy&&<Button onClick={()=>abort.current?.abort()}>Cancel</Button>}</div></>
 }

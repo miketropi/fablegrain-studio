@@ -19,13 +19,17 @@ jobs:
         with:
           node-version: '22.22.3'
       - run: npm install --no-audit --no-fund
+      - name: Verify SDK documentation is installed
+        run: |
+          test -f node_modules/@ui-sdk/react/docs/llms.txt
+          sed -n '1,45p' node_modules/@ui-sdk/react/docs/llms.txt
       - run: npm test
       - run: npm run typecheck
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
-      - name: Upload browser QA on failure
-        if: failure()
+      - name: Upload browser QA screenshots
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: browser-qa

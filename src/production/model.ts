@@ -1,7 +1,7 @@
 export type Scene={id:string;title:string;summary:string;characterIds:string[]};
 export type Chapter={id:string;title:string;scenes:Scene[]};
 export type Panel={id:string;x:number;y:number;w:number;h:number;assetId?:string;dialogue:string;locked?:boolean};
-export type ComicPage={id:string;title:string;sceneId?:string;panels:Panel[];seconds:number};
+export type ComicPage={id:string;title:string;sceneId?:string;sourceCompositionId?:string;panels:Panel[];seconds:number};
 export type StoryProduction={chapters:Chapter[];pages:ComicPage[];style:string;characterSheets:Record<string,string>};
 export const emptyProduction=():StoryProduction=>({chapters:[],pages:[],style:"",characterSheets:{}});
 export const makePage=(id:string,title:string):ComicPage=>({id,title,seconds:3,panels:[{id:id+"-1",x:.04,y:.04,w:.92,h:.55,dialogue:""},{id:id+"-2",x:.04,y:.62,w:.44,h:.34,dialogue:""},{id:id+"-3",x:.52,y:.62,w:.44,h:.34,dialogue:""}]});

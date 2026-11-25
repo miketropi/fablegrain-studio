@@ -1,0 +1,20 @@
+"use client";
+import {useState} from "react";
+import {Button} from "@ui-sdk/react/button";
+import {Field,FieldLabel} from "@ui-sdk/react/field";
+import {Input} from "@ui-sdk/react/input";
+import {Choice,ChoiceItem,ImagePicker} from "../ui/controls";
+import type {Project} from "./project";
+type Props={project:Project;update:(p:Partial<Project>)=>void;initialCharacter:string;focusedScene:string;onUse:(id:string)=>void;onCompose:()=>void;onGenerate:()=>void};
+const usable=["Background","Environment","Character pose","Prop","Image","Scene","Scene still"];
+export default function AssetLibrary({project,update,initialCharacter,focusedScene,onUse,onCompose,onGenerate}:Props){
+ const [kind,setKind]=useState(initialCharacter?"Character pose":"Background"),[character,setCharacter]=useState(initialCharacter),[search,setSearch]=useState(""),[status,setStatus]=useState(""),[busy,setBusy]=useState(false);
+ const target=project.scenes?.find(s=>s.id===focusedScene)??project.scenes?.[0];
+ const visible=project.assets.filter(a=>a.kind!=="Character action frame"&&(!initialCharacter||a.characterId===initialCharacter)&&a.name.toLowerCase().includes(search.toLowerCase()));
+ async function upload(file:File){if(busy)return;if(kind==="Character pose"&&!character){setStatus("Choose a character before importing a pose.");return}if(!["image/png","image/jpeg","image/webp"].includes(file.type)||file.size>750000){setStatus("Use PNG, JPEG or WebP under 750 KB.");return}if(project.assets.reduce((n,a)=>n+(a.src?.length??0),0)+file.size*1.4>2500000){setStatus("Local asset budget exceeded.");return}
+ setBusy(true);try{const src=await new Promise<string>((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result));r.onerror=reject;r.readAsDataURL(file)});update({assets:[...project.assets,{id:crypto.randomUUID(),name:file.name,src,kind,characterId:kind==="Character pose"?character:undefined}]});setStatus("Imported "+file.name+". Use in scene to place it directly.")}catch{setStatus("Image import failed")}finally{setBusy(false)}}
+ return <section className="asset-library"><header className="asset-library-head"><div><h1>Prepare / Asset library</h1><p>{initialCharacter?"Poses for "+(project.characters.find(c=>c.id===initialCharacter)?.name??"character"):"Reusable backgrounds, transparent poses and props."}</p></div><Button onClick={onGenerate}>Generate with AI</Button><Button data-variant="solid" onClick={onCompose}>Next: compose <span aria-hidden>›</span></Button></header>
+ <div className="asset-import"><Field><FieldLabel>Import as</FieldLabel><Choice value={kind} disabled={busy} onValueChange={setKind}>{["Background","Character pose","Prop","Image"].map(k=><ChoiceItem key={k} value={k}>{k}</ChoiceItem>)}</Choice></Field>{kind==="Character pose"&&<Field><FieldLabel>Character</FieldLabel><Choice value={character} disabled={busy} onValueChange={setCharacter}><ChoiceItem value="__none">Choose character</ChoiceItem>{project.characters.map(c=><ChoiceItem key={c.id} value={c.id}>{c.name}</ChoiceItem>)}</Choice></Field>}<ImagePicker disabled={busy} onFile={f=>void upload(f)} onReject={()=>setStatus("Use PNG, JPEG or WebP under 750 KB.")}/></div>
+ <p>Insert into: <strong>{target?.name??"New scene"}</strong>. Reference sheets are for consistency; transparent poses are for placement.</p><Input aria-label="Search assets" placeholder="Search assets…" value={search} onChange={e=>setSearch(e.target.value)}/>{status&&<p role="status">{status}</p>}
+ <div className="asset-library-grid">{visible.map(a=><article key={a.id} className="asset-library-card">{a.src?<img src={a.src} alt={a.name}/>:<span className="muted">No image</span>}<strong>{a.name}</strong><small>{a.kind}{a.characterId?" · "+(project.characters.find(c=>c.id===a.characterId)?.name??"Missing character"):""}</small>{a.src&&usable.includes(a.kind)?<Button aria-label={"Use "+a.name+" in scene"} onClick={()=>onUse(a.id)}>Use in scene</Button>:<small>Reference only</small>}</article>)}</div>{!visible.length&&<p>No matching assets. Import an image above to get started.</p>}</section>
+}

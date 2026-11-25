@@ -124,3 +124,33 @@ test("existing browser projects are preserved when example is added",async({page
  await page.reload();await expect(page.getByRole("button",{name:/The last signal/})).toBeVisible();
  await page.getByRole("button",{name:/Existing project/}).click();await expect(page.getByRole("textbox",{name:"Story bible"})).toHaveValue("Keep my story");
 });
+
+test("example canvas zoom, pan, duplicate, layer order and undo",async({page})=>{
+ test.skip(!!process.env.E2E_BASE_URL,"Requires new canvas");
+ await page.goto("/");await page.getByRole("button",{name:/The last signal/}).click();
+ await page.getByRole("button",{name:"How to use Fablegrain"}).click();await page.getByRole("button",{name:"Open Comic pages",exact:true}).click();
+ const sheet=page.locator(".comic-sheet");await expect(sheet).toBeVisible();const start=(await sheet.boundingBox())!;
+ await page.getByRole("button",{name:"Zoom in canvas"}).click();await expect.poll(async()=> (await sheet.boundingBox())!.width/start.width).toBeGreaterThan(1.2);
+ await page.getByRole("button",{name:"Fit comic page"}).click();await expect.poll(async()=>Math.abs((await sheet.boundingBox())!.width-start.width)).toBeLessThan(1);
+ const viewport=page.getByRole("region",{name:"Canvas viewport"});const vb=(await viewport.boundingBox())!,beforePan=(await sheet.boundingBox())!;
+ await page.mouse.move(vb.x+7,vb.y+7);await page.mouse.down();await page.mouse.move(vb.x+37,vb.y+22,{steps:5});await page.mouse.up();
+ await expect.poll(async()=> (await sheet.boundingBox())!.x-beforePan.x).toBeGreaterThan(20);await page.getByRole("button",{name:"Fit comic page"}).click();
+ await page.getByRole("button",{name:"Select panel 2",exact:true}).click();
+ await page.getByRole("button",{name:"Duplicate panel",exact:true}).click();await expect(page.locator(".comic-panel")).toHaveCount(4);
+ await expect(page.getByRole("button",{name:"Select panel 4",exact:true})).toHaveAttribute("aria-pressed","true");
+ const layers=page.getByRole("tree",{name:"Panel layers"});await expect(layers.getByRole("treeitem").first()).toContainText("Panel 4");
+ await page.getByRole("button",{name:"Send layer backward"}).click();
+ await expect(page.getByRole("button",{name:"Select panel 3",exact:true})).toHaveAttribute("aria-pressed","true");
+ await page.getByRole("button",{name:"Undo page edit"}).click();await expect(page.getByRole("button",{name:"Select panel 4",exact:true})).toHaveAttribute("aria-pressed","true");
+ await page.getByRole("button",{name:"Undo page edit"}).click();await expect(page.locator(".comic-panel")).toHaveCount(3);
+ await page.getByRole("button",{name:"Redo page edit"}).click();await expect(page.locator(".comic-panel")).toHaveCount(4);
+ await page.screenshot({path:"test-results/example-canvas-tools.png"});
+});
+test("example timeline exports a nonempty WebM file",async({page})=>{
+ test.skip(!!process.env.E2E_BASE_URL,"Local real-time media encoding test");
+ test.setTimeout(60000);
+ await page.goto("/");await page.getByRole("button",{name:/The last signal/}).click();
+ const button=page.getByRole("button",{name:"Export timeline WebM"});await expect(button).toBeEnabled();
+ const download=page.waitForEvent("download",{timeout:40000});await button.click();const result=await download;expect(result.suggestedFilename()).toBe("timeline.webm");
+ const file=await result.path();const bytes=readFileSync(file);expect(bytes.length).toBeGreaterThan(1000);expect(bytes.subarray(0,4).toString("hex")).toBe("1a45dfa3");await expect(page.getByText("Export complete",{exact:true})).toBeVisible();
+});

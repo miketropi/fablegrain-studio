@@ -1,5 +1,5 @@
 "use client";
-import {useLayoutEffect,useRef,useState,useMemo,type CSSProperties} from "react";
+import {useLayoutEffect,useRef,useState,useMemo,type CSSProperties,type ReactNode} from "react";
 import {createChange,createResize,createSelection,createViewport,createMove,createLasso,definePrimitive,live,type ResizeDraft,type MoveDraft,type LassoDraft} from "@ui-sdk/core";
 import {createParts} from "@ui-sdk/react/primitive";
 import {Toolbar,ToolbarButton,ToolbarSeparator} from "@ui-sdk/react/toolbar";
@@ -86,8 +86,8 @@ const canvas=definePrimitive({
   }),
 });
 const {Root,Frame,World,Rectangle,ZoomIn,ZoomOut,Fit,ZoomLabel,Shape,Move,Handle:ResizeHandle}=createParts(canvas,{root:"div",frame:"div",world:"div",rectangle:"div",zoomIn:"button",zoomOut:"button",fit:"button",zoomLabel:"span",shape:"div",move:"button",handle:"button"});
-type Props={page:ComicPage;width:number;height:number;assets:Project["assets"];selected:string[];onSelect:(ids:string[])=>void;onCommit:(page:ComicPage)=>void};
-export function ComicCanvas({page,width,height,assets,selected,onSelect,onCommit}:Props){
+type Props={page:ComicPage;width:number;height:number;assets:Project["assets"];selected:string[];onSelect:(ids:string[])=>void;onCommit:(page:ComicPage)=>void;background?:string;renderPanel?:(panel:ComicPage["panels"][number],index:number)=>ReactNode;sceneMode?:boolean};
+export function ComicCanvas({page,width,height,assets,selected,onSelect,onCommit,background,renderPanel,sceneMode}:Props){
   const frame=useRef<HTMLDivElement>(null);
   const [size,setSize]=useState({width:0,height:0});
   useLayoutEffect(()=>{const el=frame.current;if(!el)return;const measure=()=>{const w=el.clientWidth,h=el.clientHeight;setSize(s=>s.width===w&&s.height===h?s:{width:w,height:h})};measure();const observer=new ResizeObserver(measure);observer.observe(el);return()=>observer.disconnect()},[]);
@@ -106,10 +106,10 @@ export function ComicCanvas({page,width,height,assets,selected,onSelect,onCommit
         <span className="muted comic-view-hint">Drag to pan · Shift-drag to select</span>
       </Toolbar>
       <Frame className="comic-viewport" style={{height:size.height}}>
-        <World className="comic-world"><div className="comic-sheet" style={{width:sheetWidth,height:sheetHeight} as CSSProperties}>
-      {page.panels.map((panel,index)=><Shape key={panel.id} value={panel.id} className="comic-panel" data-locked={panel.locked?"true":undefined}>
-        <Move value={panel.id} className="comic-panel-content" aria-label={"Select panel "+(index+1)}>
-          {assets.find(a=>a.id===panel.assetId)?.src?<img draggable={false} alt="" src={assets.find(a=>a.id===panel.assetId)!.src}/>:<span>Panel {index+1}</span>}{panel.dialogue&&<span className="speech">{panel.dialogue}</span>}
+        <World className="comic-world"><div className="comic-sheet" style={{width:sheetWidth,height:sheetHeight,...(sceneMode?{backgroundColor:"#17191e",backgroundImage:background?"url("+JSON.stringify(background)+")":undefined,backgroundSize:"cover",backgroundPosition:"center"}:{})} as CSSProperties}>
+      {page.panels.map((panel,index)=><Shape key={panel.id} value={panel.id} className={"comic-panel"+(sceneMode?" scene-object":"")} data-locked={panel.locked?"true":undefined}>
+        <Move value={panel.id} className={"comic-panel-content"+(sceneMode?" scene-object-content":"")} aria-label={sceneMode?"Select object "+(index+1):"Select panel "+(index+1)}>
+          {renderPanel?renderPanel(panel,index):<>{assets.find(a=>a.id===panel.assetId)?.src?<img draggable={false} alt="" src={assets.find(a=>a.id===panel.assetId)!.src}/>:<span>Panel {index+1}</span>}{panel.dialogue&&<span className="speech">{panel.dialogue}</span>}</>}
         </Move>
         {selected.length===1&&selected.includes(panel.id)&&!panel.locked&&handles.map(edge=><ResizeHandle key={edge} value={panel.id+":"+edge} panelId={panel.id} edge={edge} className="comic-handle" data-edge={edge} aria-label={"Resize panel "+(index+1)+" "+edge}/>)}
       </Shape>)}

@@ -26,7 +26,7 @@ test("deployed or local project creation, navigation and persistence",async({pag
 });
 test("local UI: compact workspace panels and timeline resize",async({page})=>{
  test.skip(!!process.env.E2E_BASE_URL,"New UI assertions require the newly built version");
- await page.goto("/");await page.getByRole("button",{name:/The last signal/}).click();
+ await page.goto("/");await page.getByRole("button",{name:/The last signal/}).click();await page.getByRole("navigation",{name:"Workspace"}).getByRole("button",{name:"Editor",exact:true}).click();
  await expect(page.getByRole("region",{name:"Timeline editor"})).toBeVisible();
  const libraryHandle=page.getByRole("separator",{name:"Resize library"});const initial=await page.locator(".library").boundingBox();await libraryHandle.focus();await page.keyboard.press("ArrowRight");await expect.poll(async()=> (await page.locator(".library").boundingBox())!.width).toBeGreaterThan(initial!.width);
  await page.getByRole("button",{name:"Toggle library"}).click();
@@ -68,7 +68,7 @@ test("local UI uses SDK controls and production tabs",async({page})=>{
 
 test("local UI: SDK tree, track menu and export dialog",async({page})=>{
  test.skip(!!process.env.E2E_BASE_URL,"Requires new UI");
- await page.goto("/");await page.getByRole("button",{name:/The last signal/}).click();
+ await page.goto("/");await page.getByRole("button",{name:/The last signal/}).click();await page.getByRole("navigation",{name:"Workspace"}).getByRole("button",{name:"Editor",exact:true}).click();
  const tree=page.getByRole("tree",{name:"Project library tree"});await expect(tree).toBeVisible();
  const branch=tree.getByRole("treeitem",{name:/Characters/}).first();await branch.focus();await page.keyboard.press("ArrowLeft");await expect(branch).toHaveAttribute("aria-expanded","false");await page.keyboard.press("ArrowRight");await expect(branch).toHaveAttribute("aria-expanded","true");
  await page.getByRole("button",{name:"Track",exact:true}).click();await page.getByRole("menuitem",{name:"Text track",exact:true}).click();
@@ -105,7 +105,7 @@ test("local comic canvas: SDK resize, keyboard move and cancel",async({page})=>{
 test("example is populated, navigable and exports real PNG",async({page})=>{
  test.skip(!!process.env.E2E_BASE_URL,"Requires the new example project");
  await page.goto("/");await expect(page.getByText(/2 pages · 2 characters/)).toBeVisible();
- await page.getByRole("button",{name:/The last signal/}).click();
+ await page.getByRole("button",{name:/The last signal/}).click();await page.getByRole("navigation",{name:"Workspace"}).getByRole("button",{name:"Editor",exact:true}).click();
  const canvas=page.locator(".stage canvas");
  await expect(canvas).toBeVisible();
  await expect.poll(async()=>canvas.evaluate(el=>{const c=el as HTMLCanvasElement;return Array.from(c.getContext("2d")!.getImageData(0,0,1,1).data).join(",")})).toBe("242,238,231,255");
@@ -127,7 +127,7 @@ test("existing browser projects are preserved when example is added",async({page
 
 test("example canvas zoom, pan, duplicate, layer order and undo",async({page})=>{
  test.skip(!!process.env.E2E_BASE_URL,"Requires new canvas");
- await page.goto("/");await page.getByRole("button",{name:/The last signal/}).click();
+ await page.goto("/");await page.getByRole("button",{name:/The last signal/}).click();await page.getByRole("navigation",{name:"Workspace"}).getByRole("button",{name:"Editor",exact:true}).click();
  await page.getByRole("button",{name:"How to use Fablegrain"}).click();await page.getByRole("button",{name:"Open Comic pages",exact:true}).click();
  const sheet=page.locator(".comic-sheet");await expect(sheet).toBeVisible();const start=(await sheet.boundingBox())!;
  await page.getByRole("button",{name:"Zoom in canvas"}).click();await expect.poll(async()=> (await sheet.boundingBox())!.width/start.width).toBeGreaterThan(1.2);
@@ -149,17 +149,34 @@ test("example canvas zoom, pan, duplicate, layer order and undo",async({page})=>
 test("example timeline exports a nonempty WebM file",async({page})=>{
  test.skip(!!process.env.E2E_BASE_URL,"Local real-time media encoding test");
  test.setTimeout(60000);
- await page.goto("/");await page.getByRole("button",{name:/The last signal/}).click();
+ await page.goto("/");await page.getByRole("button",{name:/The last signal/}).click();await page.getByRole("navigation",{name:"Workspace"}).getByRole("button",{name:"Editor",exact:true}).click();
  const button=page.getByRole("button",{name:"Export timeline WebM"});await expect(button).toBeEnabled();
  const download=page.waitForEvent("download",{timeout:40000});await button.click();const result=await download;expect(result.suggestedFilename()).toBe("timeline.webm");
  const file=await result.path();const bytes=readFileSync(file);expect(bytes.length).toBeGreaterThan(1000);expect(bytes.subarray(0,4).toString("hex")).toBe("1a45dfa3");await expect(page.getByText("Export complete",{exact:true})).toBeVisible();
 });
 
 test("example multi-selection, group move, lasso and locked layers",async({page})=>{
- test.skip(!!process.env.E2E_BASE_URL,"Local builder test");await page.goto("/");await page.getByRole("button",{name:/The last signal/}).click();await page.getByRole("button",{name:"How to use Fablegrain"}).click();await page.getByRole("button",{name:"Open Comic pages",exact:true}).click();
+ test.skip(!!process.env.E2E_BASE_URL,"Local builder test");await page.goto("/");await page.getByRole("button",{name:/The last signal/}).click();await page.getByRole("navigation",{name:"Workspace"}).getByRole("button",{name:"Editor",exact:true}).click();await page.getByRole("button",{name:"How to use Fablegrain"}).click();await page.getByRole("button",{name:"Open Comic pages",exact:true}).click();
  const p2=page.getByRole("button",{name:"Select panel 2",exact:true}),p3=page.getByRole("button",{name:"Select panel 3",exact:true});await p2.click();await p3.click({modifiers:["Control"]});await expect(p2).toHaveAttribute("aria-pressed","true");await expect(p3).toHaveAttribute("aria-pressed","true");
  const a=(await p2.boundingBox())!,b=(await p3.boundingBox())!;await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();await page.mouse.move(a.x+a.width/2,a.y+a.height/2-10,{steps:6});await page.mouse.up();await expect.poll(async()=> (await p2.boundingBox())!.y).toBeLessThan(a.y-5);expect(Math.abs(((await p2.boundingBox())!.y-a.y)-((await p3.boundingBox())!.y-b.y))).toBeLessThan(2);
  await page.getByRole("button",{name:"Lock selected layers"}).click();await expect(page.locator(".comic-panel[data-locked=true]")).toHaveCount(2);await expect(page.getByRole("button",{name:"Remove panel"})).toBeDisabled();const locked=(await p2.boundingBox())!;await p2.focus();await page.keyboard.press("Shift+ArrowUp");expect((await p2.boundingBox())!.y).toBe(locked.y);
  await page.getByRole("button",{name:"Unlock selected layers"}).click();await expect(page.locator(".comic-panel[data-locked=true]")).toHaveCount(0);
  const viewport=(await page.getByRole("region",{name:"Canvas viewport"}).boundingBox())!,sheet=(await page.locator(".comic-sheet").boundingBox())!;await page.keyboard.down("Shift");await page.mouse.move(viewport.x+5,viewport.y+5);await page.mouse.down();await page.mouse.move(sheet.x+sheet.width+4,sheet.y+sheet.height+4,{steps:10});await page.mouse.up();await page.keyboard.up("Shift");await expect(page.locator(".comic-panel[data-selected=true]")).toHaveCount(3);await page.screenshot({path:"test-results/example-multiselect.png"});
+});
+
+test("scene-first example: drag a character, animate and add a linked scene clip",async({page})=>{
+ test.skip(!!process.env.E2E_BASE_URL,"Requires Scene Composer");
+ await page.goto("/");await page.getByRole("button",{name:/The last signal/}).click();await expect(page.getByRole("heading",{name:"Scene Composer"})).toBeVisible();
+ const stage=page.locator(".scene-composer .comic-sheet");await expect(stage).toBeVisible();
+ await expect(page.locator(".scene-object")).toHaveCount(2);
+ const card=page.getByRole("button",{name:"Add Asha · Standing to scene",exact:true});const a=(await card.boundingBox())!,b=(await stage.boundingBox())!;
+ await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();await page.mouse.move(b.x+b.width*.5,b.y+b.height*.4,{steps:12});await page.mouse.up();
+ await expect(page.locator(".scene-object")).toHaveCount(3);
+ await page.getByRole("button",{name:"Play scene"}).click();await expect(page.getByRole("button",{name:"Pause scene"})).toBeVisible();
+ const preview=page.getByRole("img",{name:"Animated scene preview"});await expect(preview).toBeVisible();
+ await expect.poll(async()=>preview.evaluate(el=>{const c=el as HTMLCanvasElement;return Array.from(c.getContext("2d")!.getImageData(5,5,1,1).data).join(",")})).not.toBe("0,0,0,0");
+ await page.getByRole("button",{name:"Edit scene"}).click();await expect(stage).toBeVisible();
+ await page.getByRole("button",{name:"Add scene to timeline"}).click();
+ await expect(page.getByRole("region",{name:"Timeline editor"})).toBeVisible();
+ const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem("fablegrain.projects.v1")!));const project=stored.find((p:{id:string})=>p.id==="example-last-signal");expect(project.scenes[0].objects.length).toBe(3);expect(project.sequence.clips.some((c:{sceneId?:string})=>c.sceneId==="composed-discovery")).toBeTruthy();
 });

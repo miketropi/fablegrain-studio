@@ -1,7 +1,7 @@
 export type TrackKind = "video" | "overlay" | "text" | "audio";
 export type Track = { id: string; name: string; kind: TrackKind };
 export type Keyframe = { frame: number; value: number };
-export type Clip = { id: string; trackId: string; name: string; start: number; end: number; keyframes: Keyframe[]; pageId?: string; assetId?: string; text?: string };
+export type Clip = { id: string; trackId: string; name: string; start: number; end: number; keyframes: Keyframe[]; pageId?: string; sceneId?: string; assetId?: string; text?: string };
 export type Sequence = { fps: number; duration: number; tracks: Track[]; clips: Clip[] };
 export type Edit = "move" | "trim-start" | "trim-end";
 export const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));

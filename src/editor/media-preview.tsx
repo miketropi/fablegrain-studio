@@ -6,22 +6,25 @@ import type {Project} from "../studio/project";
 import {renderPage,download} from "../production/render";
 import {visualClips} from "./composition";
 import {interpolate} from "./timeline";
+import {drawScene,loadSceneImages,type SceneImages} from "../scenes/render";
 type Source=HTMLCanvasElement|HTMLImageElement;
-type Cache={pages:Map<string,Source>;assets:Map<string,Source>};
+type Cache={pages:Map<string,Source>;assets:Map<string,Source>;sceneImages:SceneImages};
 const image=(src:string)=>new Promise<HTMLImageElement>((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=()=>reject(Error("Image could not be decoded"));im.src=src});
 async function load(project:Project):Promise<Cache>{
   const pages=new Map<string,Source>(),assets=new Map<string,Source>();
   const pageIds=new Set(project.sequence.clips.map(c=>c.pageId).filter(Boolean)),assetIds=new Set(project.sequence.clips.map(c=>c.assetId).filter(Boolean));
   for(const p of project.production?.pages??[])if(pageIds.has(p.id))pages.set(p.id,await renderPage(p,project.assets,project.width,project.height));
   for(const a of project.assets)if(a.src&&assetIds.has(a.id))assets.set(a.id,await image(a.src));
-  return {pages,assets};
+  const sceneImages=await loadSceneImages((project.scenes??[]).filter(s=>project.sequence.clips.some(c=>c.sceneId===s.id)),project.assets);return {pages,assets,sceneImages};
 }
 function draw(ctx:CanvasRenderingContext2D,project:Project,cache:Cache,frame:number,placeholder:boolean){
   const {width:w,height:h,sequence}=project;ctx.globalAlpha=1;ctx.fillStyle="#121316";ctx.fillRect(0,0,w,h);
   for(const c of visualClips(sequence,frame)){
     const track=sequence.tracks.find(t=>t.id===c.trackId);ctx.save();ctx.globalAlpha=Math.max(0,Math.min(1,interpolate(c.keyframes,frame-c.start)));
     const src=c.pageId?cache.pages.get(c.pageId):c.assetId?cache.assets.get(c.assetId):undefined;
-    if(src){const sw=src instanceof HTMLCanvasElement?src.width:src.naturalWidth,sh=src instanceof HTMLCanvasElement?src.height:src.naturalHeight;const scale=Math.min(w/sw,h/sh);ctx.drawImage(src,(w-sw*scale)/2,(h-sh*scale)/2,sw*scale,sh*scale)}
+    const scene=c.sceneId?project.scenes?.find(s=>s.id===c.sceneId):undefined;
+    if(scene)drawScene(ctx,scene,cache.sceneImages,w,h,(frame-c.start)/sequence.fps);
+    else if(src){const sw=src instanceof HTMLCanvasElement?src.width:src.naturalWidth,sh=src instanceof HTMLCanvasElement?src.height:src.naturalHeight;const scale=Math.min(w/sw,h/sh);ctx.drawImage(src,(w-sw*scale)/2,(h-sh*scale)/2,sw*scale,sh*scale)}
     else if(track?.kind==="text"&&c.text){ctx.font=Math.round(w*.05)+"px sans-serif";ctx.textAlign="center";ctx.fillStyle="#fff";ctx.shadowColor="#000";ctx.shadowBlur=8;ctx.fillText(c.text,w/2,h*.85,w*.9)}
     else if(placeholder&&track?.kind==="video"){ctx.font=Math.round(w*.035)+"px sans-serif";ctx.fillStyle="#91939c";ctx.textAlign="center";ctx.fillText(c.name+" — no source",w/2,h/2,w*.9)}
     ctx.restore();
@@ -30,8 +33,8 @@ function draw(ctx:CanvasRenderingContext2D,project:Project,cache:Cache,frame:num
 export default function MediaPreview({project,frame}:{project:Project;frame:number}){
   const canvas=useRef<HTMLCanvasElement>(null),abort=useRef<AbortController|null>(null);
   const [cache,setCache]=useState<Cache|null>(null),[status,setStatus]=useState(""),[busy,setBusy]=useState(false),[progress,setProgress]=useState(0);
-  const sources=useMemo(()=>JSON.stringify(project.sequence.clips.map(c=>[c.pageId,c.assetId])),[project.sequence.clips]);
-  useEffect(()=>{let live=true;setCache(null);setStatus("");load(project).then(c=>{if(live)setCache(c)}).catch(e=>{if(live)setStatus(e.message)});return()=>{live=false}},[project.production?.pages,project.assets,project.width,project.height,sources]);
+  const sources=useMemo(()=>JSON.stringify(project.sequence.clips.map(c=>[c.pageId,c.assetId,c.sceneId])),[project.sequence.clips]);
+  useEffect(()=>{let live=true;setCache(null);setStatus("");load(project).then(c=>{if(live)setCache(c)}).catch(e=>{if(live)setStatus(e.message)});return()=>{live=false}},[project.production?.pages,project.scenes,project.assets,project.width,project.height,sources]);
   useEffect(()=>{const ctx=canvas.current?.getContext("2d");if(ctx&&cache)draw(ctx,project,cache,Math.min(frame,Math.max(0,project.sequence.duration-1)),true)},[project,cache,frame]);
   useEffect(()=>()=>abort.current?.abort(),[]);
   async function output(){
@@ -39,7 +42,7 @@ export default function MediaPreview({project,frame}:{project:Project;frame:numb
     const exportCache:Cache=cache;
     const sequence=project.sequence;
     if(!sequence.clips.length||sequence.duration<=0||sequence.duration/sequence.fps>120){setStatus("Export requires a sequence between 1 and 120 seconds.");return}
-    if(sequence.clips.some(c=>{const kind=sequence.tracks.find(t=>t.id===c.trackId)?.kind;return kind==="audio"||kind==="text"&&!c.text||kind!=="text"&&!(c.pageId?cache.pages.has(c.pageId):c.assetId&&cache.assets.has(c.assetId))})){setStatus("Remove audio and empty clips, or assign each visual clip a source before export.");return}
+    if(sequence.clips.some(c=>{const kind=sequence.tracks.find(t=>t.id===c.trackId)?.kind;return kind==="audio"||kind==="text"&&!c.text||kind!=="text"&&!(c.sceneId?project.scenes?.some(s=>s.id===c.sceneId):c.pageId?cache.pages.has(c.pageId):c.assetId&&cache.assets.has(c.assetId))})){setStatus("Remove audio and empty clips, or assign each visual clip a source before export.");return}
     if(typeof MediaRecorder==="undefined"){setStatus("Browser recording unavailable");return}
     const mime=["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"].find(t=>MediaRecorder.isTypeSupported(t));if(!mime){setStatus("WebM encoding unavailable");return}
     const c=document.createElement("canvas");c.width=project.width;c.height=project.height;const context=c.getContext("2d");if(!context||!c.captureStream){setStatus("Canvas capture unavailable");return}const ctx:CanvasRenderingContext2D=context;

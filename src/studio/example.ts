@@ -21,6 +21,15 @@ const scenes=[
 {id:"asha-ref",name:"Asha · Character reference",kind:"Character",src:svg('<rect width="800" height="640" fill="#d2cec0"/><g stroke="#a7b0a9" stroke-width="2"><path d="M0 150h800M0 460h800M400 0v640" stroke-dasharray="6 8"/></g>'+person(220,235,1.45)+person(580,230,1.45)+'<path d="M515 122h125v118H515z" fill="none" stroke="#788986" stroke-width="2"/><g fill="#273c43" font-family="sans-serif" font-size="20"><text x="40" y="48">ASHA / TRAVELER</text><text x="160" y="590">FULL BODY</text><text x="525" y="590">COLOR STUDY</text></g><rect x="510" y="84" width="32" height="24" fill="#46636b"/><rect x="550" y="84" width="32" height="24" fill="#d49b67"/><rect x="590" y="84" width="32" height="24" fill="#ccb69b"/>')},
 {id:"observer-ref",name:"Observer · Design reference",kind:"Character",src:svg('<rect width="800" height="640" fill="#cdd0c5"/><g stroke="#a4ada7" stroke-width="2"><path d="M0 180h800M0 460h800M400 0v640" stroke-dasharray="6 8"/></g>'+drone(205,294,1.6)+drone(594,294,1.15)+'<g fill="#273c43" font-family="sans-serif" font-size="20"><text x="40" y="48">OBSERVER / SERVICE DRONE</text><text x="160" y="530">FRONT</text><text x="525" y="530">SCALE STUDY</text></g>')}
 ];
+const sceneAssets:Project["assets"]=[
+ {id:"scene-city",name:"City · Background",kind:"Background",src:svg(sky("#203645","#c19c7d")+stars+'<circle cx="600" cy="140" r="77" fill="#d1c4a7"/>'+skyline+'<path d="M365 640l69-235 135 235z" fill="#384d54"/>')},
+ {id:"scene-asha",name:"Asha · Standing",kind:"Character pose",characterId:"asha",src:"data:image/svg+xml;charset=utf-8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="220" height="310" viewBox="-110 -65 220 310">'+person(0,0)+'</svg>')},
+ {id:"scene-observer",name:"Observer · Hover",kind:"Character pose",characterId:"observer-character",src:"data:image/svg+xml;charset=utf-8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="145" viewBox="-100 -50 200 145">'+drone(0,0)+'</svg>')}
+];
+function exampleScenes():NonNullable<Project["scenes"]>{return [{id:"composed-discovery",name:"01 · Discovery",storySceneId:"example-scene-1",backgroundId:"scene-city",seconds:4,camera:"None",caption:"Asha: Someone is still here?",objects:[
+{id:"scene-actor-asha",name:"Asha",kind:"character",characterId:"asha",assetId:"scene-asha",x:.12,y:.46,w:.39,h:.47,dialogue:"",rotation:0,opacity:1,flip:false,motion:"Slide in"},
+{id:"scene-actor-observer",name:"Observer",kind:"character",characterId:"observer-character",assetId:"scene-observer",x:.58,y:.35,w:.32,h:.22,dialogue:"",rotation:0,opacity:1,flip:false,motion:"Float"}
+]}]}
 function makePanel(id:string,x:number,y:number,w:number,h:number,assetId:string,dialogue:string):Panel{return {id,x,y,w,h,assetId,dialogue}}
 export function createExampleProject(id=EXAMPLE_ID):Project {
  const pages:ComicPage[]=[
@@ -36,7 +45,7 @@ export function createExampleProject(id=EXAMPLE_ID):Project {
  return {id,name:"The last signal",format:"Motion comic",width:720,height:1280,fps:30,
  story:"LOGLINE\nIn an abandoned city, Asha discovers a signal that leads to a forgotten service drone. Together they restart the city beacon.\n\nWORLD\nA quiet post-collapse city at the edge of dawn. Technology is weathered but never magical.\n\nARC\n1. Discovery — a signal breaks eleven years of silence.\n2. Contact — the beacon leads Asha to the Observer.\n3. Resolution — the city wakes up.\n\nVISUAL RULES\nMuted teal, slate, warm amber; graphic-novel silhouettes. Asha keeps the same teal coat, amber scarf and dark visor. Observer has a hexagonal shell and turquoise light.\n\nTRY IT\nChange a scene or dialogue, resize a panel, then preview the linked page in Editor.",
  characters:[{id:"asha",name:"Asha",description:"A resourceful traveler. Teal coat, amber scarf, dark visor; cautious but hopeful."},{id:"observer-character",name:"Observer",description:"A small forgotten service drone. Hexagonal shell, turquoise light; protective and curious."}],
- assets:scenes.map(a=>({...a})),
+ assets:[...scenes.map(a=>({...a})),...sceneAssets],scenes:exampleScenes(),
  production:{style:"Graphic novel • restrained teal/slate/amber palette • cinematic framing • consistent silhouettes",characterSheets:{asha:"asha-ref","observer-character":"observer-ref"},chapters:[{id:"example-chapter",title:"Chapter 1 · A voice in the silence",scenes:[{id:"example-scene-1",title:"Discovery",summary:"Asha crosses the empty city and detects an unexpected transmission.",characterIds:["asha"]},{id:"example-scene-2",title:"Contact",summary:"Asha follows the beacon, meets the Observer and watches the city wake.",characterIds:["asha","observer-character"]}]}],pages},
  sequence:{fps:30,duration:240,tracks:[{id:"video",name:"Video",kind:"video"},{id:"overlay",name:"Overlay",kind:"overlay"},{id:"text",name:"Text",kind:"text"},{id:"audio",name:"Audio",kind:"audio"}],clips:[
  {id:"example-clip-1",trackId:"video",name:"01 · The signal",start:0,end:120,pageId:pages[0].id,keyframes:[]},
@@ -45,4 +54,4 @@ export function createExampleProject(id=EXAMPLE_ID):Project {
  ]}};
 }
 // Add a separate example to old local workspaces. Never replace an edited project.
-export function ensureExample(projects:Project[]):Project[]{return projects.some(p=>p.id===EXAMPLE_ID)?projects:[createExampleProject(),...projects]}
+export function ensureExample(projects:Project[]):Project[]{const existing=projects.find(p=>p.id===EXAMPLE_ID);if(!existing)return [createExampleProject(),...projects];if(existing.scenes!==undefined)return projects;return projects.map(p=>p.id!==EXAMPLE_ID?p:{...p,scenes:exampleScenes(),assets:[...p.assets,...sceneAssets.filter(a=>!p.assets.some(x=>x.id===a.id))]})}

@@ -11,11 +11,11 @@ import type {Project} from "../studio/project";
 import {boundPanel,continuity,emptyProduction,makePage,reorder,type ComicPage,type Panel,type StoryProduction} from "./model";
 import {exportPng,exportMotion} from "./render";
 import "./production.css";
-type Props={project:Project;update:(patch:Partial<Project>)=>void};
+type Props={project:Project;update:(patch:Partial<Project>)=>void;initialTab?:string};
 const uid=()=>crypto.randomUUID();
-export default function Production({project,update}:Props){
+export default function Production({project,update,initialTab="Story map"}:Props){
   const p=project.production??emptyProduction();
-  const [tab,setTab]=useState("Story map"),[pageId,setPageId]=useState(""),[panelId,setPanelId]=useState(""),[status,setStatus]=useState(""),[busy,setBusy]=useState(false),[progress,setProgress]=useState(0);
+  const [tab,setTab]=useState(initialTab),[pageId,setPageId]=useState(""),[panelId,setPanelId]=useState(""),[status,setStatus]=useState(""),[busy,setBusy]=useState(false),[progress,setProgress]=useState(0);
   const abort=useRef<AbortController|null>(null);
   useEffect(()=>()=>abort.current?.abort(),[]);
   const save=(patch:Partial<StoryProduction>)=>update({production:{...p,...patch}});

@@ -101,3 +101,26 @@ test("local comic canvas: SDK resize, keyboard move and cancel",async({page})=>{
  await page.getByRole("button",{name:"Back to projects"}).click();await page.reload();await page.getByRole("button",{name:/Canvas QA/}).click();await page.getByRole("navigation",{name:"Workspace"}).getByRole("button",{name:"Production",exact:true}).click();await page.getByRole("tab",{name:"Comic pages"}).click();
  await expect.poll(async()=>Math.abs((await page.locator(".comic-panel").nth(1).boundingBox())!.width-current.width)).toBeLessThan(2);
 });
+
+test("example is populated, navigable and exports real PNG",async({page})=>{
+ test.skip(!!process.env.E2E_BASE_URL,"Requires the new example project");
+ await page.goto("/");await expect(page.getByText(/2 pages · 2 characters/)).toBeVisible();
+ await page.getByRole("button",{name:/The last signal/}).click();
+ const canvas=page.locator(".stage canvas");
+ await expect(canvas).toBeVisible();
+ await expect.poll(async()=>canvas.evaluate(el=>{const c=el as HTMLCanvasElement;return Array.from(c.getContext("2d")!.getImageData(0,0,1,1).data).join(",")})).toBe("242,238,231,255");
+ await page.getByRole("button",{name:"How to use Fablegrain"}).click();await expect(page.getByRole("dialog",{name:"Explore the workflow"})).toBeVisible();
+ await page.getByRole("button",{name:"Open Comic pages",exact:true}).click();await expect(page.getByRole("tab",{name:"Comic pages"})).toHaveAttribute("aria-selected","true");
+ await expect(page.locator(".comic-panel img")).toHaveCount(3);
+ const download=page.waitForEvent("download");await page.getByRole("button",{name:"PNG",exact:true}).click();const png=await download;expect(png.suggestedFilename()).toMatch(/\.png$/);
+ await page.getByRole("tab",{name:"Review",exact:true}).click();await expect(page.getByText("No missing references detected.")).toBeVisible();
+ await page.getByRole("tab",{name:"Character sheets",exact:true}).click();await expect(page.getByAltText("Asha reference sheet")).toBeVisible();
+ await page.screenshot({path:"test-results/example-character-sheets.png"});
+});
+test("existing browser projects are preserved when example is added",async({page})=>{
+ test.skip(!!process.env.E2E_BASE_URL,"Requires new example seed");
+ await page.goto("/");await page.getByLabel("Project name").fill("Existing project");await page.getByRole("button",{name:"Create project"}).click();await page.getByRole("textbox",{name:"Story bible"}).fill("Keep my story");
+ await page.evaluate(()=>{const k="fablegrain.projects.v1";const records=JSON.parse(localStorage.getItem(k)!);localStorage.setItem(k,JSON.stringify(records.filter((p:{id:string})=>p.id!=="example-last-signal")))});
+ await page.reload();await expect(page.getByRole("button",{name:/The last signal/})).toBeVisible();
+ await page.getByRole("button",{name:/Existing project/}).click();await expect(page.getByRole("textbox",{name:"Story bible"})).toHaveValue("Keep my story");
+});

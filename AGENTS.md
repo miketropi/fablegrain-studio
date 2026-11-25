@@ -10,3 +10,6 @@
 ## UI SDK native gate (mandatory)
 
 Use official SDK component parts for all available controls. Do not imitate SDK roles/slots or write native equivalents. Read installed docs in CI or locally; consult the official website when unavailable and record that limitation. Retain web.css as the component style baseline. Custom CSS is for app layout and domain surfaces only; no global button/input/select styling. Document every custom interaction exception. Build and test are necessary but do not certify visual parity; inspect actual screenshots before declaring a UI release visually approved.
+
+## UI regression release gate
+Treat browser failure as release-blocking even when unit/type/build pass. Before declaring a UI release ready, run the complete existing E2E suite, check real pointer hit targets and bounding rectangles for all workflow navigation buttons, check desktop canvas/playback/publish visibility and mobile overflow, and review captured screenshots at desktop and compact widths. Do not add features while a UI regression is unresolved. A green build alone is not UX approval.

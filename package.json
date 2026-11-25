@@ -10,7 +10,7 @@
     "test": "node --experimental-strip-types --test src/editor/timeline.test.ts src/production/model.test.ts src/editor/composition.test.ts src/ai/prompt.test.ts"
   },
   "engines": {
-    "node": ">=22.16.0"
+    "node": ">=22.22.3"
   },
   "dependencies": {
     "@ui-sdk/core": "latest",
@@ -19,7 +19,7 @@
     "next": "^16.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "@composio/core": "^0.19.1",
+    "@composio/core": "0.31.0",
     "@modelcontextprotocol/sdk": "^1.0.0"
   },
   "devDependencies": {
@@ -27,5 +27,6 @@
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.0.0",
     "typescript": "^5.9.0"
-  }
+  },
+  "type": "module"
 }

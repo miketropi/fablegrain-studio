@@ -11,7 +11,7 @@ test("workflow navigation never overlaps and composition controls stay visible",
  const nav=page.getByRole("navigation",{name:"Workspace"});await nav.getByRole("button",{name:"Assets",exact:true}).click();await expect(page.getByRole("heading",{name:"Prepare / Asset library"})).toBeVisible();await nav.getByRole("button",{name:"Scenes",exact:true}).click();
  await expect(page.locator(".scene-object")).toHaveCount(2);
  const canvas=page.locator(".scene-composer .comic-sheet");await expect(canvas).toBeVisible();
- if(viewport.width>=1050){await expect(page.getByRole("button",{name:"Play scene"})).toBeInViewport({ratio:.95});await expect(page.getByRole("button",{name:"Add scene to timeline"})).toBeInViewport({ratio:.95});await expect(canvas).toBeInViewport({ratio:.95});}
+ if(viewport.width>=1050){await expect(page.getByRole("button",{name:"Play scene"})).toBeInViewport({ratio:.95});await expect(page.getByRole("button",{name:"Add scene to timeline"})).toBeInViewport({ratio:.95});await expect(canvas).toBeInViewport({ratio:.95});await expect.poll(async()=>Math.round((await canvas.boundingBox())!.height),{message:"Portrait artboard must be large enough to edit"}).toBeGreaterThanOrEqual(viewport.height>=900?320:220);}
  else{await expect.poll(async()=>page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width+1);await canvas.scrollIntoViewIfNeeded();await expect(canvas).toBeInViewport({ratio:.9});}
  await page.screenshot({path:"test-results/layout-"+viewport.width+".png"});
  }

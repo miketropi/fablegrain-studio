@@ -15,3 +15,6 @@ The main navigation groups Plan, Prepare, Compose, Publish. Storyboard opens the
 
 ## 0.16.1 — UI regression repair
 v0.16.0 browser QA showed overlapping navigation hit targets: Generate intercepted Assets. Use intrinsic grid columns and non-shrinking controls instead of letting SDK button widths collapse in nested flex layout. Composer now separates scrollable asset and property panes from a bounded canvas/playback workspace on desktop; compact screens retain scrolling with stage first. No changes to project data or features. Added pointer hit-target and viewport visibility regression tests. Consulted official React Button and Toolbar documentation; retained SDK web.css and parts.
+
+## 0.16.2 — canvas density after screenshot review
+Visual review of the 0.16.1 responsive screenshots showed that the 720px-high desktop artboard was too small despite passing viewport checks. Scene selection now shares the composer header; scene name, storyboard summary, cast and step status moved into Inspector. Desktop regression test additionally requires a portrait artboard of at least 320px height at 1440×900 and 220px at 1280×720. No model or feature changes.

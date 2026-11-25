@@ -31,22 +31,22 @@ const canvas=definePrimitive({
   },
   slots:slot=>({
     root:slot({attrs:()=>({role:"group","aria-label":"Comic canvas"})}),
-    shape:slot<{panelId:string}>({
-      props:{panelId:"string"},
-      attrs:(state,{api,props})=>({style:api.resize.boxStyle(state,props.panelId),"data-selected":String(state.selected.includes(props.panelId))}),
-      live:live((state,{api,props})=>({style:api.resize.style(state,props.panelId)})),
+    shape:slot<{value:string}>({
+      props:{value:"string"},
+      attrs:(state,{api,key})=>({style:api.resize.boxStyle(state,key),"data-selected":String(state.selected.includes(key))}),
+      live:live((state,{api,key})=>({style:api.resize.style(state,key)})),
     }),
-    move:slot<{panelId:string}>({
-      props:{panelId:"string"},
-      attrs:(state,{props})=>({type:"button","aria-pressed":String(state.selected.includes(props.panelId))}),
+    move:slot<{value:string}>({
+      props:{value:"string"},
+      attrs:(state,{key})=>({type:"button","aria-pressed":String(state.selected.includes(key))}),
       on:{
-        pointerdown:(event,{api,props,el})=>{if(event.button!==0||!el)return;api.selection.choose(props.panelId,{reason:"item-press",event});api.resize.pointerdown(event,props.panelId,"move",el)},
-        keydown:(event,{api,props})=>{if(event.key===" "||event.key==="Enter"){event.preventDefault();api.selection.choose(props.panelId,{reason:"item-press",event})}else api.resize.keydown(event,props.panelId,"move")},
+        pointerdown:(event,{api,key,el})=>{if(event.button!==0||!el)return;api.selection.choose(key,{reason:"item-press",event});api.resize.pointerdown(event,key,"move",el)},
+        keydown:(event,{api,key})=>{if(event.key===" "||event.key==="Enter"){event.preventDefault();api.selection.choose(key,{reason:"item-press",event})}else api.resize.keydown(event,key,"move")},
       },
-      press:({api,props},event)=>api.selection.choose(props.panelId,{reason:"item-press",event}),
+      press:({api,key},event)=>api.selection.choose(key,{reason:"item-press",event}),
     }),
-    handle:slot<{panelId:string;edge:Handle}>({
-      props:{panelId:"string",edge:"string"},
+    handle:slot<{value:string;panelId:string;edge:Handle}>({
+      props:{value:"string",panelId:"string",edge:"string"},
       attrs:(_state,{api,props})=>({type:"button",...api.resize.handleAttrs(props.edge)}),
       on:{
         pointerdown:(event,{api,props,el})=>{if(event.button!==0||!el)return;event.stopPropagation();api.resize.pointerdown(event,props.panelId,props.edge,el)},
@@ -65,11 +65,11 @@ export function ComicCanvas({page,width,height,assets,selected,onSelect,onCommit
   const keys=useMemo(()=>selected?[selected]:[],[selected]);
   return <div className="comic-sheet" ref={sheet} style={{aspectRatio:width+"/"+height,"--page-ratio":width/height} as CSSProperties}>
     {size.width>0&&size.height>0&&<Root className="comic-canvas" boxes={boxes} selected={keys} width={size.width} height={size.height} onSelectedChange={value=>onSelect(value[0]??"")} onBoxesChange={value=>{const next=applyBoxes(page,value,size.width,size.height);if(next!==page)onCommit(next)}}>
-      {page.panels.map((panel,index)=><Shape key={panel.id} panelId={panel.id} className="comic-panel">
-        <Move panelId={panel.id} className="comic-panel-content" aria-label={"Select panel "+(index+1)}>
+      {page.panels.map((panel,index)=><Shape key={panel.id} value={panel.id} className="comic-panel">
+        <Move value={panel.id} className="comic-panel-content" aria-label={"Select panel "+(index+1)}>
           {assets.find(a=>a.id===panel.assetId)?.src?<img draggable={false} alt="" src={assets.find(a=>a.id===panel.assetId)!.src}/>:<span>Panel {index+1}</span>}{panel.dialogue&&<span className="speech">{panel.dialogue}</span>}
         </Move>
-        {selected===panel.id&&handles.map(edge=><ResizeHandle key={edge} panelId={panel.id} edge={edge} className="comic-handle" data-edge={edge} aria-label={"Resize panel "+(index+1)+" "+edge}/>)}
+        {selected===panel.id&&handles.map(edge=><ResizeHandle key={edge} value={panel.id+":"+edge} panelId={panel.id} edge={edge} className="comic-handle" data-edge={edge} aria-label={"Resize panel "+(index+1)+" "+edge}/>)}
       </Shape>)}
     </Root>}
   </div>;

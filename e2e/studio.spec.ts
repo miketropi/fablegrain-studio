@@ -34,6 +34,8 @@ test("local UI: compact workspace panels and timeline resize",async({page})=>{
  await resize.focus();await page.keyboard.press("ArrowUp");const after=await page.locator(".timeline").boundingBox();expect(after!.height).toBeGreaterThan(before!.height);
  await page.setViewportSize({width:390,height:844});
  await page.getByRole("button",{name:"Toggle inspector"}).click();await expect(page.locator(".inspector")).toBeVisible();
+ await page.getByRole("button",{name:"Toggle inspector"}).click();await expect(page.locator(".inspector")).toBeHidden();
+ await page.getByRole("button",{name:"Toggle library"}).click();await expect(page.locator(".library")).toBeVisible();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(391);
 });
 test("local UI: project begins with story and hides video FPS for comic",async({page})=>{
@@ -55,6 +57,7 @@ test("local UI uses SDK controls and production tabs",async({page})=>{
  await expect(page.getByRole("tabpanel")).toBeVisible();
  await page.getByRole("button",{name:"+ Page",exact:true}).click();
  await expect(page.locator(".comic-panel")).toHaveCount(3);
+ await expect(page.locator('[data-slot="number-input-control"]').first()).toBeVisible();
  await expect(page.locator('[data-slot="file-input-trigger"]')).toBeVisible();
  await page.screenshot({path:"test-results/studio-comic.png"});
 });

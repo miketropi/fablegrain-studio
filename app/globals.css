@@ -37,3 +37,8 @@ body{font-feature-settings:"cv11","ss01";line-height:1.45}button{transition:back
 .export-progress{min-width:110px;max-width:220px}
 .opacity-form [data-slot="field"]{margin:0}
 @media(max-width:800px){.workspace[data-mobile-panel=library] .library,.workspace[data-mobile-panel=inspector] .inspector{padding:0;overflow:hidden}.timeline-slider{width:76px;min-width:64px}}
+
+/* Compact overlays are independent from desktop collapsed columns. */
+@media(max-width:800px){.workspace[data-mobile-panel=library] .library,.workspace[data-mobile-panel=inspector] .inspector{visibility:visible;display:block}}
+[data-slot="number-input-group"]{min-width:0;width:100%}
+[data-slot="number-input-control"]{min-width:0;flex:1;width:100%}

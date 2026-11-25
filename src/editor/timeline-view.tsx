@@ -3,7 +3,7 @@ import {useEffect,useRef,useState,type PointerEvent as ReactPointerEvent} from "
 import {bindDrag} from "@ui-sdk/core";
 import {Toolbar,ToolbarButton,ToolbarSeparator} from "@ui-sdk/react/toolbar";
 import {Play,Pause,SkipBack,Scissors,Diamond,Magnet,Undo2,Redo2,Plus,Trash2} from "lucide-react";
-import {addKeyframe,clamp,editClip,frameAt,splitClip,timecode,type Clip,type Edit,type Sequence} from "./timeline";
+import {addKeyframe,clamp,editClip,frameAt,splitClip,timecode,moveToTrack,type Clip,type Edit,type Sequence} from "./timeline";
 
 type Props={sequence:Sequence; onCommit:(s:Sequence)=>void; frame:number; setFrame:(f:number)=>void; selected:string|null; setSelected:(id:string|null)=>void; undo:()=>void; redo:()=>void; canUndo:boolean; canRedo:boolean};
 export default function Timeline({sequence,onCommit,frame,setFrame,selected,setSelected,undo,redo,canUndo,canRedo}:Props){
@@ -23,8 +23,8 @@ export default function Timeline({sequence,onCommit,frame,setFrame,selected,setS
   function drag(e:ReactPointerEvent<HTMLElement>,clip:Clip,mode:Edit){
     if(e.button!==0)return;
     e.stopPropagation();setPlaying(false);setSelected(clip.id);cleanup.current?.();
-    const initial=e.clientX;let result=sequence;
-    cleanup.current=bindDrag(e.currentTarget,e.nativeEvent,{threshold:3,cancelOnEscape:true,onMove:({x})=>{result=editClip(sequence,clip.id,mode,frameAt(x-initial,pixels),snap?Math.ceil(7/pixels):0,frame);setDraft(result)},onEnd:(_event,canceled)=>{setDraft(null);if(!canceled&&result!==sequence)onCommit(result);cleanup.current=undefined}});
+    const initial=e.clientX;let result=sequence; const surface=e.currentTarget.closest('.time-surface');
+    cleanup.current=bindDrag(e.currentTarget,e.nativeEvent,{threshold:3,cancelOnEscape:true,onMove:({x,y})=>{const delta=frameAt(x-initial,pixels);const target=surface?.querySelectorAll<HTMLElement>("[data-track-id]");const row=target&&Array.from(target).find(el=>{const r=el.getBoundingClientRect();return y>=r.top&&y<r.bottom});const id=row?.dataset.trackId;result=mode==="move"&&id&&id!==clip.trackId?moveToTrack(sequence,clip.id,id,clip.start+delta):editClip(sequence,clip.id,mode,delta,snap?Math.ceil(7/pixels):0,frame);setDraft(result)},onEnd:(_event,canceled)=>{setDraft(null);if(!canceled&&result!==sequence)onCommit(result);cleanup.current=undefined}});
   }
   function scrub(e:ReactPointerEvent<HTMLDivElement>){
     if(e.button!==0)return;
@@ -56,7 +56,7 @@ export default function Timeline({sequence,onCommit,frame,setFrame,selected,setS
     <div className="timeline-scroll"><div className="track-labels"><div className="ruler-label">TRACK</div>{current.tracks.map(t=><div key={t.id} className="track-label">{t.name}</div>)}</div>
     <div className="time-surface" style={{width:Math.max(1,sequence.duration*pixels),minWidth:Math.max(1,sequence.duration*pixels)}}><div className="ruler" onPointerDown={scrub} role="slider" tabIndex={0} aria-label="Playhead" aria-valuemin={0} aria-valuemax={sequence.duration} aria-valuenow={frame} onKeyDown={e=>{if(["ArrowLeft","ArrowRight","Home","End"].includes(e.key)){e.preventDefault();setPlaying(false);setFrame(e.key==="Home"?0:e.key==="End"?sequence.duration:clamp(frame+(e.key==="ArrowLeft"?-1:1),0,sequence.duration))}}}>
       {Array.from({length:Math.floor(sequence.duration/sequence.fps)+1},(_,i)=>i).map(i=><span key={i} style={{left:i*sequence.fps*pixels}}>{i}s</span>)}</div>
-      {current.tracks.map(t=><div className="track" key={t.id} style={{backgroundSize:sequence.fps*pixels+"px 100%"}}>{current.clips.filter(c=>c.trackId===t.id).map(c=><div key={c.id} role="button" tabIndex={0} aria-label={c.name} aria-pressed={selected===c.id} data-kind={t.kind} className={"clip "+(selected===c.id?"selected":"")} style={{left:c.start*pixels,width:(c.end-c.start)*pixels}} onPointerDown={e=>drag(e,c,"move")} onFocus={()=>setSelected(c.id)} onKeyDown={e=>{if(e.key==="Enter"||e.key===" ") {e.preventDefault();setSelected(c.id)} else if(e.key==="ArrowLeft"||e.key==="ArrowRight"){e.preventDefault();onCommit(editClip(sequence,c.id,"move",e.key==="ArrowLeft"?-1:1))}}}>
+      {current.tracks.map(t=><div className="track" data-track-id={t.id} key={t.id} style={{backgroundSize:sequence.fps*pixels+"px 100%"}}>{current.clips.filter(c=>c.trackId===t.id).map(c=><div key={c.id} role="button" tabIndex={0} aria-label={c.name} aria-pressed={selected===c.id} data-kind={t.kind} className={"clip "+(selected===c.id?"selected":"")} style={{left:c.start*pixels,width:(c.end-c.start)*pixels}} onPointerDown={e=>drag(e,c,"move")} onFocus={()=>setSelected(c.id)} onKeyDown={e=>{if(e.key==="Enter"||e.key===" ") {e.preventDefault();setSelected(c.id)} else if(e.key==="ArrowLeft"||e.key==="ArrowRight"){e.preventDefault();onCommit(editClip(sequence,c.id,"move",e.key==="ArrowLeft"?-1:1))}}}>
         <span className="trim left" onPointerDown={e=>drag(e,c,"trim-start")}/><span className="clip-name">{c.name}</span><span className="trim right" onPointerDown={e=>drag(e,c,"trim-end")}/>{c.keyframes.map(k=><i key={k.frame} className="keyframe" style={{left:k.frame*pixels}}/>)}</div>)}</div>)}
       <div className="playhead" style={{left:frame*pixels}}/>
     </div></div>

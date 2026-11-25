@@ -55,3 +55,10 @@ Timeline now includes compatible-track transfer and interpolation primitives (dr
 - Real media import, timeline composition, audio, source trimming, keyframe runtime, MP4 export and rendering job queue.
 - Character generation, AI provider tool execution, job lifecycle, cost approval, retries and asset provenance; inbound MCP authorization.
 - Validate image export layout versus preview, WebM compatibility and memory usage; add page/chapter management and robust history.
+
+
+## Milestone 2 — comic-to-motion bridge (0.3.0)
+
+The Editor can append comic pages as image clips and bind page/image assets and text to timeline clips. It now draws a canvas composition from active clips with linear opacity keyframes, supports adding same-kind tracks and compatible cross-track pointer moves, and offers silent browser WebM timeline export. Export refuses unresolved sources or audio clips. The browser encoder is real-time and capped at 30 FPS and 120 seconds, not deterministic offline MP4 rendering. Source video/audio import, source offsets, audio sync, transforms, and multi-selection remain pending.
+
+Milestone 1 model/timeline tests were executed with Node 22.16: 14/14 passed, with matching Git blob hashes. The newly added composition tests and complete application build/browser/provider checks still require verification. No npm lockfile is available.

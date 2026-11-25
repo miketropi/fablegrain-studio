@@ -1,4 +1,5 @@
 import {test,expect,type Page} from "@playwright/test";
+import {version} from "../package.json";
 async function chooseComic(page:Page){const label=page.getByLabel("Format",{exact:true});const form=page.locator("form").filter({has:page.getByLabel("Project name")});const field=(await label.count())?label.first():form.getByRole("combobox").first();if(await field.evaluate(el=>el.tagName==="SELECT")){await field.selectOption("Comic")}else{await field.click();await page.getByRole("option",{name:"Comic",exact:true}).click()}}
 test("deployed or local project creation, navigation and persistence",async({page})=>{
  const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));
@@ -60,6 +61,7 @@ test("local UI uses SDK controls and production tabs",async({page})=>{
  await expect(page.locator(".comic-panel")).toHaveCount(3);
  await expect(page.locator('[data-slot="number-input-control"]').first()).toBeVisible();
  await expect(page.locator('[data-slot="file-input-trigger"]')).toBeVisible();
+ const bounds=await page.locator(".comic-sheet").boundingBox();expect(bounds).not.toBeNull();expect(bounds!.y+bounds!.height).toBeLessThanOrEqual(page.viewportSize()!.height);
  await page.screenshot({path:"test-results/studio-comic.png"});
 });
 
@@ -75,8 +77,8 @@ test("local UI: SDK tree, track menu and export dialog",async({page})=>{
  await page.screenshot({path:"test-results/studio-editor.png"});
 });
 test("deployed build identity",async({page,request})=>{
- test.skip(!process.env.E2E_BASE_URL,"Deployment identity check only");
+ // Verify both the local build and deployment match the source under test.
  const response=await request.get("/api/version");expect(response.ok(),"Deployment must expose its version; redeploy the latest source first").toBeTruthy();
- const identity=await response.json();console.log("Deployed version:",identity.version);
+ const identity=await response.json();console.log("Application version:",identity.version);expect(identity.version,"Build must match the checked-out source version").toBe(version);
  await page.goto("/");await expect(page.locator("main[data-app-version]")).toHaveAttribute("data-app-version",identity.version);
 });
